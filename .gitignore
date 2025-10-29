@@ -1,0 +1,26 @@
+# Fichiers compilés
+*.class
+
+# Fichiers temporaires IDE (Eclipse, IntelliJ, NetBeans)
+*.log
+*.tmp
+*.bak
+*.swp
+/.idea/
+/*.iml
+/.vscode/
+/nbproject/
+
+# Fichiers PDF et autres documents
+*.pdf
+*.docx
+*.xlsx
+
+# Dossiers de build / output
+/bin/
+/out/
+/build/
+
+# Fichiers système (Mac/Windows/Linux)
+.DS_Store
+Thumbs.db

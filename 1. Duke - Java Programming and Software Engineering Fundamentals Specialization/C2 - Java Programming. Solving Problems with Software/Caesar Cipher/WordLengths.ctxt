@@ -1,0 +1,12 @@
+#BlueJ class context
+comment0.target=WordLengths
+comment1.params=resource\ counts
+comment1.target=void\ countWordLengths(edu.duke.FileResource,\ int[])
+comment1.text=\r\n\ Compte\ le\ nombre\ de\ mots\ de\ chaque\ longueur\ dans\ le\ fichier.\r\n\ @param\ resource\ le\ fichier\ \u00E0\ analyser\r\n\ @param\ counts\ le\ tableau\ des\ longueurs\ (ex\:\ taille\ 31\ pour\ 0\u201330+)\r\n
+comment2.params=values
+comment2.target=int\ indexOfMax(int[])
+comment2.text=\r\n\ Trouve\ l'index\ de\ la\ longueur\ la\ plus\ fr\u00E9quente.\r\n
+comment3.params=
+comment3.target=void\ testCountWordLengths()
+comment3.text=\r\n\ M\u00E9thode\ de\ test\ \:\ lit\ un\ fichier,\ compte\ les\ longueurs\ et\ affiche\ les\ r\u00E9sultats.\r\n
+numComments=4

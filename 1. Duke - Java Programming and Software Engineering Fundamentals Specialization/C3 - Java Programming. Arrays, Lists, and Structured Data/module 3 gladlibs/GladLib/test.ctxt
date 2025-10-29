@@ -1,0 +1,22 @@
+#BlueJ class context
+comment0.target=test
+comment0.text=\r\n\ D\u00E9crivez\ votre\ classe\ test\ ici.\r\n\r\n\ @author\ (votre\ nom)\r\n\ @version\ (un\ num\u00E9ro\ de\ version\ ou\ une\ date)\r\n
+comment1.params=
+comment1.target=test()
+comment2.params=source
+comment2.target=void\ initializeFromSource(java.lang.String)
+comment3.params=source
+comment3.target=java.util.ArrayList\ readIt(java.lang.String)
+comment4.params=source
+comment4.target=java.lang.String\ randomFrom(java.util.ArrayList)
+comment5.params=label
+comment5.target=java.lang.String\ getSubstitute(java.lang.String)
+comment6.params=w
+comment6.target=java.lang.String\ processWord(java.lang.String)
+comment7.params=source
+comment7.target=java.lang.String\ fromTemplate(java.lang.String)
+comment8.params=s\ lineWidth
+comment8.target=void\ printOut(java.lang.String,\ int)
+comment9.params=
+comment9.target=void\ t()
+numComments=10

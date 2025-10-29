@@ -1,0 +1,7 @@
+#BlueJ class context
+comment0.target=HelloWorld
+comment1.params=
+comment1.target=void\ runHello()
+comment2.params=n
+comment2.target=int\ myFunction(int)
+numComments=3
