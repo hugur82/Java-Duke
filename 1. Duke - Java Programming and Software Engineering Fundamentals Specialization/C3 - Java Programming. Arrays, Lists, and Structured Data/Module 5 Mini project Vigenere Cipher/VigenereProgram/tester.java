@@ -1,5 +1,6 @@
 import edu.duke.*;
 import java.util.*;
+import java.io.*;
 
 /**
  * Décrivez votre classe tester ici.
@@ -81,5 +82,74 @@ public class tester
     public void testBreakVigenere(){
         VigenereBreaker vb = new VigenereBreaker();
         vb.breakVigenere();
+    }
+    
+    public void testReadDictionary(){
+        FileResource fr = new FileResource();
+        VigenereBreaker vb = new VigenereBreaker();
+        HashSet<String> set = vb.readDictionary(fr);
+        //System.out.println("fileressource.asString = "+ fr.asString());
+        
+        System.out.println("set = "+ set);
+        
+    }
+    
+    public void testCountWords() {
+        FileResource frDict = new FileResource("dictionaries/English");
+        VigenereBreaker vb = new VigenereBreaker();
+        HashSet<String> dict = vb.readDictionary(frDict);
+
+        FileResource frMsg = new FileResource();
+        String message = frMsg.asString();
+
+        int valid = vb.countWords(message, dict);
+        System.out.println("Number of valid words: " + valid);
+    }
+    
+    public void testBreakForLanguage() {
+        // Charger le message chiffré
+        FileResource frMsg = new FileResource();
+        String encrypted = frMsg.asString();
+        VigenereBreaker vb = new VigenereBreaker();
+        // Charger le dictionnaire
+        FileResource frDict = new FileResource("dictionaries/English");
+        HashSet<String> dictionary = vb.readDictionary(frDict);
+        
+        // Déchiffrer
+        String decrypted = vb.breakForLanguage(encrypted, dictionary);
+        
+        // Afficher un extrait
+        System.out.println("Decryption preview:");
+        System.out.println(decrypted.substring(0, Math.min(300, decrypted.length())));
+    }
+    
+    public void testMostCommonCharIn(){
+        FileResource frDict = new FileResource("dictionaries/English");
+        VigenereBreaker vb = new VigenereBreaker();
+        HashSet<String> dict = vb.readDictionary(frDict);
+        char mostCommonChar = vb.mostCommonCharIn(dict);
+        System.out.println("The most comon char is " + mostCommonChar); 
+    }
+    
+    public void testBreakForAllLangs(){
+        VigenereBreaker vb = new VigenereBreaker();
+        DirectoryResource dr = new DirectoryResource();
+        HashMap<String, HashSet<String>> languages = new HashMap<>();
+        
+        for( File f : dr.selectedFiles()){
+            
+            String languageName = f.getName();
+            FileResource fr = new FileResource(f);
+            HashSet<String> dictionary = new HashSet<> ();
+            
+            for (String word : fr.words()){
+                dictionary.add(word.toLowerCase());
+            }
+            
+            languages.put(languageName, dictionary);
+        }
+        FileResource frEncrypted = new FileResource();
+        String encrypted = frEncrypted.asString();
+        vb.breakForAllLangs(encrypted,languages);
     }
 }
