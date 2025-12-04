@@ -1,4 +1,4 @@
-package MyCompany.sa_backend;
+package com.hk.library.Book.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
