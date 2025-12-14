@@ -20,4 +20,13 @@ public class BookDTO {
         Integer bookPages;
     }
 
+    @Data
+    @AllArgsConstructor
+    @Builder
+    public static class PostOutput {
+        Long id;
+        String bookName;
+        Integer bookPages;
+    }
+
 }

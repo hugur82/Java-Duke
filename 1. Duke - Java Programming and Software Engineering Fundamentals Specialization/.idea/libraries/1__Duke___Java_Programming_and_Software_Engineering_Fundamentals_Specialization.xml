@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="1. Duke - Java Programming and Software Engineering Fundamentals Specialization">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/apache-csv.jar!/" />
+      <root url="jar://$PROJECT_DIR$/courserajava.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

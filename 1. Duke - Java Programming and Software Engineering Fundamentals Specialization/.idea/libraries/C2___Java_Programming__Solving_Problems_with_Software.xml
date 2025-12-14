@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="C2 - Java Programming. Solving Problems with Software">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/C2 - Java Programming. Solving Problems with Software/apache-csv.jar!/" />
+      <root url="jar://$PROJECT_DIR$/C2 - Java Programming. Solving Problems with Software/courserajava.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
