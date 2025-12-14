@@ -6,20 +6,6 @@ public class EfficientMarkovModel extends AbstractMarkovModel {
 
     public EfficientMarkovModel(int order) {
         myOrder = order;
-        myRandom = new Random();
-        myMap = new HashMap<>();
-    }
-    
-    @Override
-    public void setTraining(String s) {
-        myText = s.trim();
-        buildMap();             // 🚀 on construit la map
-        printHashMapInfo();     // 👉 commenter après test
-    }
-    
-    @Override
-    public void setRandom(int seed) {
-        myRandom = new Random(seed);
     }
 
     @Override
@@ -27,91 +13,59 @@ public class EfficientMarkovModel extends AbstractMarkovModel {
         return "EfficientMarkovModel of order " + myOrder;
     }
 
-    // ---------------------------------------------------------
-    // 1️⃣ buildMap : construit la HashMap une seule fois
-    // ---------------------------------------------------------
-    private void buildMap() {
-        myMap.clear();
-
-        for (int i = 0; i <= myText.length() - myOrder; i++) {
-
-            String key = myText.substring(i, i + myOrder);
-
-            String follow = "";
-            if (i + myOrder < myText.length()) {
-                follow = myText.substring(i + myOrder, i + myOrder + 1);
-            }
-
-            myMap.putIfAbsent(key, new ArrayList<>());
-
-            if (!follow.isEmpty()) {
-                myMap.get(key).add(follow);
-            }
-        }
+    @Override
+    public void setTraining(String s) {
+        super.setTraining(s);  // si tu hérites d'AbstractMarkovModel
+        buildMap();             // construit la HashMap automatiquement
     }
 
-    // ---------------------------------------------------------
-    // 2️⃣ getFollows : beaucoup plus court !
-    // ---------------------------------------------------------
+    
+
+    public void buildMap() {
+        myText = myText.replace('\n', ' '); 
+        myMap = new HashMap<>();
+        for (int i = 0; i <= myText.length() - myOrder; i++) {
+            String key = myText.substring(i, i + myOrder);
+            String next = (i + myOrder >= myText.length()) ? "" : myText.substring(i + myOrder, i + myOrder + 1);
+            myMap.putIfAbsent(key, new ArrayList<>());
+            if (!next.equals("")) myMap.get(key).add(next);
+        }
+        printHashMapInfo();
+    }
+
     @Override
     protected ArrayList<String> getFollows(String key) {
         return myMap.getOrDefault(key, new ArrayList<>());
     }
 
-    // ---------------------------------------------------------
-    // 3️⃣ getRandomText : identique à MarkovModel
-    // ---------------------------------------------------------
+    public void printHashMapInfo() {
+        System.out.println("Number of keys: " + myMap.size());
+        int max = 0;
+        for (ArrayList<String> al : myMap.values()) {
+            if (al.size() > max) max = al.size();
+        }
+        System.out.println("Largest value size: " + max);
+        for (String key : myMap.keySet()) {
+            if (myMap.get(key).size() == max) System.out.print(key + " ");
+        }
+        System.out.println();
+    }
+
     @Override
     public String getRandomText(int numChars) {
-        if (myText == null || myText.length() == 0) {
-            return "";
-        }
-
+        if (myText == null) return "";
         StringBuilder sb = new StringBuilder();
         int index = myRandom.nextInt(myText.length() - myOrder);
         String key = myText.substring(index, index + myOrder);
         sb.append(key);
-
-        for (int i = 0; i < numChars - myOrder; i++) {
+        for (int k = 0; k < numChars - myOrder; k++) {
             ArrayList<String> follows = getFollows(key);
             if (follows.size() == 0) break;
-
-            int randIndex = myRandom.nextInt(follows.size());
-            String next = follows.get(randIndex);
+            index = myRandom.nextInt(follows.size());
+            String next = follows.get(index);
             sb.append(next);
-
             key = key.substring(1) + next;
         }
-
         return sb.toString();
-    }
-
-    // ---------------------------------------------------------
-    // 4️⃣ printHashMapInfo (debug)
-    // ---------------------------------------------------------
-    public void printHashMapInfo() {
-
-        // if (myMap.size() < 50) {
-            // System.out.println(myMap);
-        // }
-
-        System.out.println("Number of keys: " + myMap.size());
-
-        int maxSize = 0;
-        for (ArrayList<String> al : myMap.values()) {
-            if (al.size() > maxSize) {
-                maxSize = al.size();
-            }
-        }
-
-        System.out.println("Largest value size: " + maxSize);
-        System.out.print("Keys with max value: ");
-
-        for (String key : myMap.keySet()) {
-            if (myMap.get(key).size() == maxSize) {
-                System.out.print(key + " ");
-            }
-        }
-        System.out.println();
     }
 }

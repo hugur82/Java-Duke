@@ -30,4 +30,18 @@ public class WordGramTester {
 		}
 	}
 	
+	public void testshiftadd(){
+	    String source = "this is a test this is a test this is a test of words";
+		String[] words = source.split("\\s+");
+		ArrayList<WordGram> list = new ArrayList<WordGram>();
+		int size = 4;
+		for(int index = 0; index <= words.length - size; index += 1) {
+			WordGram wg = new WordGram(words,index,size);
+			list.add(wg);
+		}
+		WordGram first = list.get(0);
+		first.shiftAdd("word");
+		System.out.println(first);
+		//Expected: "is a test word"; Result: "is a test word". Correct.
+	   }
 }

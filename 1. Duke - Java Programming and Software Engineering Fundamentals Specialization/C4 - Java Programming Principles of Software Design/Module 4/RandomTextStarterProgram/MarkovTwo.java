@@ -1,6 +1,6 @@
 
 /**
- * Décrivez votre classe MarkovTwo ici.
+ * Décrivez votre classe MarkovOne ici.
  *
  * @author (votre nom)
  * @version (un numéro de version ou une date)
@@ -8,8 +8,9 @@
 
 import java.util.*;
 
-public class MarkovTwo {
-private String myText;
+public class MarkovTwo
+{
+    private String myText;
     private Random myRandom;
     
     public MarkovTwo() {
@@ -25,43 +26,42 @@ private String myText;
     }
     
     public String getRandomText(int numChars){
-        if (myText == null){
-            return "";
-        }
         StringBuilder sb = new StringBuilder();
-         int index = myRandom.nextInt(myText.length()-2);
-         String key = myText.substring(index,index+2);  
-         sb.append(key);
+        int index = myRandom.nextInt(myText.length()-3);
+        String key = myText.substring(index,index+3);
+        sb.append(key);
         
-        for(int k=0; k < numChars-2; k++){
+        for(int k=0; k < numChars-3; k++){
             ArrayList<String> follows = getFollows(key);
-            //System.out.println("key" + key + " " + follows);
-            if (follows.size() == 0){
+            //System.out.println("key " +key + " " + follows);
+            if (follows.size()==0){
                 break;
             }
-            
             index = myRandom.nextInt(follows.size());
             String next = follows.get(index);
             sb.append(next);
-            key = key.substring(1) + next;
+            key = key.substring(1) +next;
         }
         
         return sb.toString();
     }
     
     private ArrayList<String> getFollows(String key){
-        ArrayList<String> follows = new ArrayList<>();
+        ArrayList<String> follows = new ArrayList<String>();
         int pos = 0;
-        while(pos <myText.length()){
-            int start = myText.indexOf(key, pos);
-            if (start == -1) break;
-            if (start + key.length() >= myText.length() -1) break;
-            String next = myText.substring(start + key.length(),start + key.length()+1);
+        while ( pos < myText.length()){
+            int start = myText.indexOf(key,pos);
+            if ( start == -1){
+                break;
+            }
+            if ( start +key.length()>= myText.length() -1){
+                break;
+            }
+            String next = myText.substring(start+key.length(), start+key.length()+1);
             follows.add(next);
-            pos =start + key.length();
-            
+            pos = start + key.length();
         }
-        
+       
         return follows;
     }
 }

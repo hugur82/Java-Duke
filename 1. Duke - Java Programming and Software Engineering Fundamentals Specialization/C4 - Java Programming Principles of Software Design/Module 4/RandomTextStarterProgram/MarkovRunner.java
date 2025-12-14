@@ -13,9 +13,10 @@ public class MarkovRunner {
         FileResource fr = new FileResource();
         String st = fr.asString();
         st = st.replace('\n', ' ');
+        //st = "this is a test yes a test";
         MarkovZero markov = new MarkovZero();
         markov.setTraining(st);
-        //markov.setRandom(101);
+        markov.setRandom(1024);
         for(int k=0; k < 3; k++){
             String text = markov.getRandomText(500);
             printOut(text);
@@ -23,56 +24,17 @@ public class MarkovRunner {
     }
     
     public void runMarkovOne() {
-        FileResource fr = new FileResource();
+        FileResource fr = new FileResource("data/romeo.txt");
         String st = fr.asString();
         st = st.replace('\n', ' ');
+        //st = "this is a test yes a test";
         MarkovOne markov = new MarkovOne();
         markov.setTraining(st);
-        //markov.setRandom(101);
+        markov.setRandom(365);
         for(int k=0; k < 3; k++){
             String text = markov.getRandomText(500);
             printOut(text);
         }
-    }
-    
-     public void runMarkovTwo() {
-        FileResource fr = new FileResource();
-        String st = fr.asString();
-        st = st.replace('\n', ' ');
-        //st = "this is a test yes a test";
-        MarkovTwo markov = new MarkovTwo();
-        markov.setTraining(st);
-        //markov.setRandom(101);
-        for(int k=0; k < 3; k++){
-            String text = markov.getRandomText(500);
-            printOut(text);
-        }
-    }
-    
-     public void runMarkovFour() {
-        FileResource fr = new FileResource();
-        String st = fr.asString();
-        st = st.replace('\n', ' ');
-        //st = "this is a test yes a test";
-        MarkovFour markov = new MarkovFour();
-        markov.setTraining(st);
-        markov.setRandom(25);
-        for(int k=0; k < 3; k++){
-            String text = markov.getRandomText(500);
-            printOut(text);
-        }
-    }
-    
-    public void runMarkovModel() {
-        FileResource fr = new FileResource();
-        String text = fr.asString();
-    
-        int N = 6;
-        MarkovModel mm = new MarkovModel(N);
-        mm.setRandom(38);
-        mm.setTraining(text);
-    
-        System.out.println(mm.getRandomText(500));
     }
     
     private void printOut(String s){
@@ -90,4 +52,32 @@ public class MarkovRunner {
         System.out.println("\n----------------------------------");
     }
     
+    public void runMarkovFour() {
+        FileResource fr = new FileResource("data/romeo.txt");
+        String st = fr.asString();
+        st = st.replace('\n', ' ');
+    
+        MarkovFour markov = new MarkovFour();
+        markov.setTraining(st);
+        markov.setRandom(715);
+    
+        for(int k=0; k < 3; k++){
+            String text = markov.getRandomText(500);
+            printOut(text);
+        }
+    }
+    
+    public void runMarkovModel() {
+        FileResource fr = new FileResource("data/confucius.txt");
+        String st = fr.asString();
+        st = st.replace('\n', ' ');
+    
+        int N = 8;
+        MarkovModel markov = new MarkovModel(N);
+        markov.setTraining(st);
+        markov.setRandom(365);
+    
+        String text = markov.getRandomText(500);
+        System.out.println(text);
+    }   
 }
