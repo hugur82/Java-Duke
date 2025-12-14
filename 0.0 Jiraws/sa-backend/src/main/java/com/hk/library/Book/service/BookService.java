@@ -1,5 +1,6 @@
 package com.hk.library.Book.service;
 
+import com.hk.library.Book.model.exception.BookCreationException;
 import com.hk.library.Book.persistence.BookRepository;
 import com.hk.library.Book.model.BookEntity;
 import io.micrometer.common.util.StringUtils;
@@ -14,14 +15,15 @@ public class BookService {
         this.bookRepository = bookRepository;
     }
 
-    public String createBook(String bookName,Integer bookPages){
+    public String createBook(String bookName,Integer bookPages) throws BookCreationException {
 
         if(bookName == null || StringUtils.isBlank(bookName)){
-            return "Le bookName can't be null or vide!";
+            //return "Le bookName can't be null or vide!";
+            throw new BookCreationException("Le bookName can't be null or vide!");
         }
 
         if(bookPages == null || bookPages <= 10){
-            return "le bookPage ne peut avoir moins de 10 pages";
+            throw new BookCreationException( "le bookPage ne peut avoir moins de 10 pages");
         }
 
         BookEntity existingBook = bookRepository.findByNameAndPages(bookName, bookPages);
@@ -35,7 +37,7 @@ public class BookService {
             bookRepository.save(newBook);
             return "Le livre a bien été créer";
         } else {
-            return "le livre existe déjà";
+            throw new BookCreationException( "le livre existe déjà");
 
         }
     }

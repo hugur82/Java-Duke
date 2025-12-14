@@ -1,8 +1,10 @@
 package com.hk.library.Book.controllers;
 
 import com.hk.library.Book.dto.BookDTO;
+import com.hk.library.Book.model.exception.BookCreationException;
 import com.hk.library.Book.service.BookService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -28,7 +30,7 @@ public class BookRestController {
     }
 
     @PostMapping
-    public String post(@RequestBody BookDTO.PostInput input){
+    public String post(@RequestBody BookDTO.PostInput input) throws BookCreationException {
 
         log.info(input.getBookName());
         log.info(String.valueOf(input.getBookPages()));
