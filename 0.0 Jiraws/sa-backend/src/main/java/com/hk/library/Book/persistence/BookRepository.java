@@ -10,5 +10,6 @@ public interface BookRepository extends JpaRepository<BookEntity,Long> {
 
     public BookEntity findByNameAndPages(String name, Integer pages);
 
+    public BookEntity findByIsbn(String isbn);
 
 }

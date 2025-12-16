@@ -14,19 +14,30 @@ public class BookDTO {
     public static class PostInput{
 
         @NotNull @NotBlank
+        String bookIsbn;
+
+        @NotNull @NotBlank
         String bookName;
 
         @NotNull
         Integer bookPages;
+
+        @NotNull
+        Integer bookYear;
+
+        String bookDescription;
     }
 
     @Data
     @AllArgsConstructor
     @Builder
     public static class PostOutput {
-        Long id;
+        Long bookId;
+        String bookIsbn;
         String bookName;
         Integer bookPages;
+        Integer bookYear;
+        String bookDescription;
     }
 
 }
