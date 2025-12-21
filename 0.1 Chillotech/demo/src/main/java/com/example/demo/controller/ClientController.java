@@ -1,12 +1,12 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.ClientDTO;
 import com.example.demo.entities.Client;
 import com.example.demo.service.ClientService;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.stream.Stream;
 
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -28,13 +28,15 @@ public class ClientController {
     }
 
     @GetMapping(produces = APPLICATION_JSON_VALUE)
-    public List<Client> rechercher(){
+    public Stream<ClientDTO> rechercher(){
         return this.clientService.rechercher();
     }
 
     @GetMapping(path="{id}",produces = APPLICATION_JSON_VALUE)
     public Client lire(@PathVariable int id){
-        return this.clientService.lire(id);
+           return this.clientService.lire(id);
+
+
     }
 
     @ResponseStatus(NO_CONTENT)
@@ -42,4 +44,5 @@ public class ClientController {
     public void modifier(@PathVariable int id,@RequestBody Client client){
         this.clientService.modifier(id, client);
     }
+
 }

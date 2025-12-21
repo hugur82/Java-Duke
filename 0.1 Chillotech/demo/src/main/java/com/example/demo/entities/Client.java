@@ -2,6 +2,8 @@ package com.example.demo.entities;
 
 import jakarta.persistence.*;
 
+import java.util.Date;
+
 
 @Entity
 @Table(name="CLIENT")
@@ -13,14 +15,19 @@ public class Client {
     @Column(unique=true)
     private String email;
     private String telephone;
+    private Date creation;
+    @Column(name="mis_a_jour")
+    private Date misAjour;
 
     public Client() {
     }
 
-    public Client(Integer id, String email, String telephone) {
+    public Client(Integer id, String email, String telephone, Date creation, Date misAjour) {
         this.id = id;
         this.email = email;
         this.telephone = telephone;
+        this.creation = creation;
+        this.misAjour = misAjour;
     }
 
     public Integer getId() {
@@ -45,5 +52,21 @@ public class Client {
 
     public void setTelephone(String telephone) {
         this.telephone = telephone;
+    }
+
+    public Date getCreation() {
+        return creation;
+    }
+
+    public void setCreation(Date creation) {
+        this.creation = creation;
+    }
+
+    public Date getMisAjour() {
+        return misAjour;
+    }
+
+    public void setMisAjour(Date misAjour) {
+        this.misAjour = misAjour;
     }
 }
