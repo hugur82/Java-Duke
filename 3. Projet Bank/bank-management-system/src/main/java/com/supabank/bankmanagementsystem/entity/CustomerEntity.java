@@ -1,10 +1,15 @@
 package com.supabank.bankmanagementsystem.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDate;
 
 @Entity
+@Getter @Setter
 @Table(name = "customer")
 public class CustomerEntity {
 
@@ -25,6 +30,8 @@ public class CustomerEntity {
     private String phone;
 
     @Column(nullable = false,unique = true,length = 150)
+    @NotBlank
+    @Email
     private String email;
 
     @Column(name = "password_hash",nullable = false)
@@ -42,5 +49,6 @@ public class CustomerEntity {
     private String city;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private CustomerStatus status;
 }
