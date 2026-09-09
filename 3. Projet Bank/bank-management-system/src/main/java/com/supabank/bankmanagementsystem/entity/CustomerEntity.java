@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Getter @Setter
@@ -51,4 +52,7 @@ public class CustomerEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CustomerStatus status;
+
+    @OneToMany(mappedBy = "customer")
+    private List<AccountEntity> accounts;
 }
