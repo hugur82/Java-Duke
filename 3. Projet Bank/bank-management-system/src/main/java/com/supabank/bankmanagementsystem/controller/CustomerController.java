@@ -5,7 +5,6 @@ import com.supabank.bankmanagementsystem.dto.CustomerResponseDTO;
 import com.supabank.bankmanagementsystem.service.CustomerService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,17 +24,22 @@ public class CustomerController {
         return customerService.findAll();
     }
 
-    @PostMapping("/addCustomer")
+    @GetMapping("/customers/{id}")
+    public CustomerResponseDTO findById(@PathVariable Long id){
+        return customerService.findCustomerById(id);
+    }
+
+    @PostMapping("/customers")
     public CustomerResponseDTO addCustomer(@RequestBody @Valid CustomerRequestDTO customerRequestDTO) {
         return customerService.createCustomer(customerRequestDTO);
     }
 
-    @PutMapping("/update/{id}")
+    @PutMapping("/customers/{id}")
     public CustomerResponseDTO updateCustomer(@RequestBody @Valid CustomerRequestDTO customerRequestDTO, @PathVariable("id") Long id) {
         return customerService.updateById(id, customerRequestDTO);
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/customers/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCustomer(@PathVariable("id") Long id) {
        customerService.deleteById(id);

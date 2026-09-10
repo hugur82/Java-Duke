@@ -5,6 +5,7 @@ import com.supabank.bankmanagementsystem.dto.AccountResponseDTO;
 import com.supabank.bankmanagementsystem.entity.AccountEntity;
 import com.supabank.bankmanagementsystem.entity.AccountStatus;
 import com.supabank.bankmanagementsystem.entity.CustomerEntity;
+import com.supabank.bankmanagementsystem.exception.AccountNotFoundException;
 import com.supabank.bankmanagementsystem.exception.CustomerNotFoundException;
 import com.supabank.bankmanagementsystem.repository.AccountRepository;
 import com.supabank.bankmanagementsystem.repository.CustomerRepository;
@@ -88,5 +89,15 @@ public class AccountService {
         int checkDigits = 98 - remainder;
 
         return String.format("CH%02d%s", checkDigits, bban);
+    }
+
+    public void deleteAccountById(Long accountId) {
+        AccountEntity accountEntity = accountRepository.findById(accountId).orElseThrow(() -> new AccountNotFoundException("Account not found with id " + accountId));
+        accountRepository.delete(accountEntity);
+    }
+
+    public AccountResponseDTO findAccountById(Long accountId) {
+        AccountEntity accountEntity = accountRepository.findById(accountId).orElseThrow(() -> new AccountNotFoundException("Account not found with id " + accountId));
+        return toResponseDTO(accountEntity);
     }
 }

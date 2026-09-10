@@ -74,4 +74,9 @@ public class CustomerService {
 
         customerRepository.delete(customerEntity);
     }
+
+    public CustomerResponseDTO findCustomerById(Long id) {
+        CustomerEntity customerEntity = customerRepository.findById(id).orElseThrow(() -> new CustomerNotFoundException("Customer with id " + id + " not found"));
+        return toResponseDTO(customerEntity);
+    }
 }
