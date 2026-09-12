@@ -1,7 +1,8 @@
 package com.supabank.bankmanagementsystem.service;
 
-import com.supabank.bankmanagementsystem.dto.AccountRequestDTO;
+import com.supabank.bankmanagementsystem.dto.AccountCreateRequestDTO;
 import com.supabank.bankmanagementsystem.dto.AccountResponseDTO;
+import com.supabank.bankmanagementsystem.dto.AccountUpdateRequestDTO;
 import com.supabank.bankmanagementsystem.entity.AccountEntity;
 import com.supabank.bankmanagementsystem.entity.AccountStatus;
 import com.supabank.bankmanagementsystem.entity.CustomerEntity;
@@ -34,12 +35,12 @@ public class AccountService {
                 .toList();
     }
 
-    public AccountResponseDTO createAccount(AccountRequestDTO accountRequestDTO) {
+    public AccountResponseDTO createAccount(AccountCreateRequestDTO accountCreateRequestDTO) {
         AccountEntity accountEntity = new AccountEntity();
-        CustomerEntity customerEntity = customerRepository.findById(accountRequestDTO.getCustomerId()).orElseThrow(()->new CustomerNotFoundException("Customer not found with id "+accountRequestDTO.getCustomerId()));
+        CustomerEntity customerEntity = customerRepository.findById(accountCreateRequestDTO.getCustomerId()).orElseThrow(()->new CustomerNotFoundException("Customer not found with id "+ accountCreateRequestDTO.getCustomerId()));
 
         accountEntity.setCustomer(customerEntity);
-        accountEntity.setAccountType(accountRequestDTO.getAccountType());
+        accountEntity.setAccountType(accountCreateRequestDTO.getAccountType());
         accountEntity.setCreationDate(LocalDateTime.now());
         accountEntity.setBalance(BigDecimal.ZERO);
         accountEntity.setAccountStatus(AccountStatus.ACTIVE);
@@ -99,5 +100,16 @@ public class AccountService {
     public AccountResponseDTO findAccountById(Long accountId) {
         AccountEntity accountEntity = accountRepository.findById(accountId).orElseThrow(() -> new AccountNotFoundException("Account not found with id " + accountId));
         return toResponseDTO(accountEntity);
+    }
+
+    public AccountResponseDTO updateAccount(Long accountId,AccountUpdateRequestDTO accountUpdateRequestDTO) {
+        AccountEntity accountEntity = accountRepository
+                .findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(
+                        "Account not found with id " + accountId));
+
+        accountEntity.setAccountStatus(accountUpdateRequestDTO.getStatus());
+
+        return toResponseDTO(accountRepository.save(accountEntity));
     }
 }

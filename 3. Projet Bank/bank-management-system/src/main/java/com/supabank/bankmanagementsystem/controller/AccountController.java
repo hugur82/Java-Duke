@@ -1,7 +1,8 @@
 package com.supabank.bankmanagementsystem.controller;
 
-import com.supabank.bankmanagementsystem.dto.AccountRequestDTO;
+import com.supabank.bankmanagementsystem.dto.AccountCreateRequestDTO;
 import com.supabank.bankmanagementsystem.dto.AccountResponseDTO;
+import com.supabank.bankmanagementsystem.dto.AccountUpdateRequestDTO;
 import com.supabank.bankmanagementsystem.service.AccountService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -29,14 +30,21 @@ public class AccountController {
     }
 
     @PostMapping("/accounts")
-    public AccountResponseDTO createAccount(@RequestBody @Valid AccountRequestDTO accountRequestDTO) {
-        return accountService.createAccount(accountRequestDTO);
+    public AccountResponseDTO createAccount(@RequestBody @Valid AccountCreateRequestDTO accountCreateRequestDTO) {
+        return accountService.createAccount(accountCreateRequestDTO);
     }
 
     @DeleteMapping("/accounts/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteAccount(@PathVariable("id")  Long id) {
         accountService.deleteAccountById(id);
+    }
+
+    @PatchMapping("/accounts/{id}")
+    public AccountResponseDTO updateAccount(
+            @Valid @RequestBody AccountUpdateRequestDTO accountUpdateRequestDTO,
+            @PathVariable Long id){
+        return accountService.updateAccount(id, accountUpdateRequestDTO);
     }
 
 }

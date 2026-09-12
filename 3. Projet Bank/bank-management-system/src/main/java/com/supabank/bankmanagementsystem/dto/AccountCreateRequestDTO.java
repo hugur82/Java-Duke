@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class AccountRequestDTO {
+public class AccountCreateRequestDTO {
     @NotNull
     private Long customerId;
     @NotNull

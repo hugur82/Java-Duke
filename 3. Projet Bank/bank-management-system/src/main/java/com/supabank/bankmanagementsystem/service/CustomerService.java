@@ -50,7 +50,10 @@ public class CustomerService {
     }
 
     public CustomerResponseDTO updateById(Long id, CustomerRequestDTO customerRequestDTO) {
-        CustomerEntity customerEntity = customerRepository.findById(id).orElseThrow(()-> new CustomerNotFoundException("Customer not found with id " + id));
+        CustomerEntity customerEntity = customerRepository
+                .findById(id)
+                .orElseThrow(()-> new CustomerNotFoundException(
+                        "Customer not found with id " + id));
 
         customerEntity.setFirstName(customerRequestDTO.getFirstName());
         customerEntity.setLastName(customerRequestDTO.getLastName());
@@ -70,13 +73,20 @@ public class CustomerService {
     }
 
     public void deleteById(Long id) {
-        CustomerEntity customerEntity=customerRepository.findById(id).orElseThrow(()-> new CustomerNotFoundException("Id "+id +" not found for delete"));
+        CustomerEntity customerEntity=customerRepository
+                .findById(id)
+                .orElseThrow(()-> new CustomerNotFoundException(
+                        "Id "+id +" not found for delete"));
 
         customerRepository.delete(customerEntity);
     }
 
     public CustomerResponseDTO findCustomerById(Long id) {
-        CustomerEntity customerEntity = customerRepository.findById(id).orElseThrow(() -> new CustomerNotFoundException("Customer with id " + id + " not found"));
+        CustomerEntity customerEntity = customerRepository
+                .findById(id)
+                .orElseThrow(() -> new CustomerNotFoundException(
+                        "Customer with id " + id + " not found"));
+
         return toResponseDTO(customerEntity);
     }
 }
