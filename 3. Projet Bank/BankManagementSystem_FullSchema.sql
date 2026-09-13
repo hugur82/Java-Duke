@@ -45,25 +45,17 @@ CREATE TABLE account (
 -- =========================
 -- Table: bank_transaction
 -- =========================
-CREATE TABLE bank_transaction (
-    transaction_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    transaction_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    amount DECIMAL(18,2) NOT NULL,
-    transaction_type ENUM('TRANSFER', 'DEPOSIT', 'WITHDRAWAL') NOT NULL,
-    description VARCHAR(255),
-    status ENUM('PENDING', 'COMPLETED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
 
-    source_account_id BIGINT,
-    destination_account_id BIGINT,
-
-    CONSTRAINT fk_transaction_source_account
-        FOREIGN KEY (source_account_id)
-        REFERENCES account(account_id),
-
-    CONSTRAINT fk_transaction_destination_account
-        FOREIGN KEY (destination_account_id)
-        REFERENCES account(account_id),
-
-    CONSTRAINT chk_transaction_amount
-        CHECK (amount > 0)
-);
+CREATE TABLE `bank_transaction` (
+  `transaction_id` bigint NOT NULL AUTO_INCREMENT,
+  `transaction_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `amount` decimal(18,2) NOT NULL,
+  `transaction_type` enum('DEPOSIT','WITHDRAWAL') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` enum('CREATED','PROCESSING','ACCEPTED','REJECTED') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'CREATED',
+  `account_id` bigint NOT NULL,
+  PRIMARY KEY (`transaction_id`),
+  KEY `fk_transaction_account` (`account_id`),
+  CONSTRAINT `fk_transaction_account` FOREIGN KEY (`account_id`) REFERENCES `account` (`account_id`),
+  CONSTRAINT `chk_transaction_amount` CHECK ((`amount` > 0))
+) ENGINE=InnoDB AUTO_INCREMENT=110 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci

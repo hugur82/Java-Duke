@@ -23,6 +23,11 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(TransactionNotFoundException.class)
+    public ResponseEntity<String> handleTransactionNotFoundException(TransactionNotFoundException  e) {
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity <Map<String,String>> handleMethodArgumentNotValidException(MethodArgumentNotValidException  e) {
         Map<String, String> errors = e.getBindingResult()
@@ -34,5 +39,4 @@ public class GlobalExceptionHandler {
                 ));
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
-
 }

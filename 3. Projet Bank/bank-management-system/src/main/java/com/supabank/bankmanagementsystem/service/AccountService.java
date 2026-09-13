@@ -37,7 +37,10 @@ public class AccountService {
 
     public AccountResponseDTO createAccount(AccountCreateRequestDTO accountCreateRequestDTO) {
         AccountEntity accountEntity = new AccountEntity();
-        CustomerEntity customerEntity = customerRepository.findById(accountCreateRequestDTO.getCustomerId()).orElseThrow(()->new CustomerNotFoundException("Customer not found with id "+ accountCreateRequestDTO.getCustomerId()));
+        CustomerEntity customerEntity = customerRepository
+                .findById(accountCreateRequestDTO.getCustomerId()).orElseThrow(
+                        ()->new CustomerNotFoundException(
+                                "Customer not found with id " + accountCreateRequestDTO.getCustomerId()));
 
         accountEntity.setCustomer(customerEntity);
         accountEntity.setAccountType(accountCreateRequestDTO.getAccountType());
@@ -98,7 +101,10 @@ public class AccountService {
     }
 
     public AccountResponseDTO findAccountById(Long accountId) {
-        AccountEntity accountEntity = accountRepository.findById(accountId).orElseThrow(() -> new AccountNotFoundException("Account not found with id " + accountId));
+        AccountEntity accountEntity = accountRepository
+                .findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(
+                        "Account not found with id " + accountId));
         return toResponseDTO(accountEntity);
     }
 

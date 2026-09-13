@@ -46,7 +46,7 @@ public class CustomerService {
     }
 
     private CustomerResponseDTO toResponseDTO(CustomerEntity customer) {
-        return  new CustomerResponseDTO(customer.getCustomerId(), customer.getFirstName(), customer.getLastName(), customer.getEmail(), customer.getPhone(), customer.getBirthDate(),customer.getRole(), customer.getAddress(), customer.getPostalCode(), customer.getCity(), customer.getStatus());
+        return new CustomerResponseDTO(customer.getCustomerId(), customer.getFirstName(), customer.getLastName(), customer.getEmail(), customer.getPhone(), customer.getBirthDate(),customer.getRole(), customer.getAddress(), customer.getPostalCode(), customer.getCity(), customer.getStatus());
     }
 
     public CustomerResponseDTO updateById(Long id, CustomerRequestDTO customerRequestDTO) {
