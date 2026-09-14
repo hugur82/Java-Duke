@@ -2,11 +2,12 @@ package com.supabank.bankmanagementsystem.service;
 
 import com.supabank.bankmanagementsystem.dto.TransactionCreateRequestDTO;
 import com.supabank.bankmanagementsystem.dto.TransactionResponseDTO;
-import com.supabank.bankmanagementsystem.entity.AccountEntity;
-import com.supabank.bankmanagementsystem.entity.TransactionEntity;
-import com.supabank.bankmanagementsystem.entity.TransactionStatus;
+import com.supabank.bankmanagementsystem.dto.TransactionUpdateRequestDTO;
+import com.supabank.bankmanagementsystem.entity.*;
 import com.supabank.bankmanagementsystem.exception.AccountNotFoundException;
 import com.supabank.bankmanagementsystem.exception.TransactionNotFoundException;
+import com.supabank.bankmanagementsystem.exception.TransactionProcessingNotAllowedException;
+import com.supabank.bankmanagementsystem.exception.TransactionUpdateNotAllowedException;
 import com.supabank.bankmanagementsystem.repository.AccountRepository;
 import com.supabank.bankmanagementsystem.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
@@ -66,5 +67,75 @@ public class TransactionService {
                 .orElseThrow(() -> new TransactionNotFoundException(
                         "Transaction not found with id " + transactionId));
         return toResponseDTO(transactionEntity);
+    }
+
+
+    public TransactionResponseDTO updateTransaction(
+            Long transactionId,
+            TransactionUpdateRequestDTO transactionUpdateRequestDTO) {
+
+        TransactionEntity transactionEntity = transactionRepository
+                .findById(transactionId)
+                .orElseThrow(() -> new TransactionNotFoundException(
+                        "Transaction not found with id " + transactionId));
+
+        if (transactionEntity.getTransactionStatus() != TransactionStatus.CREATED) {
+            throw new TransactionUpdateNotAllowedException(
+                    "Transaction can only be updated when its status is CREATED");
+        }
+
+        transactionEntity.setAmount(transactionUpdateRequestDTO.getAmount());
+        transactionEntity.setDescription(transactionUpdateRequestDTO.getDescription());
+
+        return toResponseDTO(transactionRepository.save(transactionEntity));
+    }
+
+    public TransactionResponseDTO processTransaction(Long transactionId) {
+
+        TransactionEntity transactionEntity = transactionRepository
+                .findById(transactionId)
+                .orElseThrow(() -> new TransactionNotFoundException(
+                        "Transaction not found with id " + transactionId));
+
+        if (transactionEntity.getTransactionStatus() != TransactionStatus.CREATED) {
+            throw new TransactionProcessingNotAllowedException(
+                    "Transaction can only be processed when its status is CREATED");
+        }
+
+        AccountEntity accountEntity = transactionEntity.getAccount();
+
+        if (accountEntity.getAccountStatus() != AccountStatus.ACTIVE) {
+            transactionEntity.setTransactionStatus(TransactionStatus.REJECTED);
+            return toResponseDTO(transactionRepository.save(transactionEntity));
+        }
+
+        transactionEntity.setTransactionStatus(TransactionStatus.PROCESSING);
+
+        if (transactionEntity.getTransactionType() == TransactionType.DEPOSIT) {
+
+            accountEntity.setBalance(
+                    accountEntity.getBalance().add(transactionEntity.getAmount())
+            );
+
+            transactionEntity.setTransactionStatus(TransactionStatus.ACCEPTED);
+
+        } else if (transactionEntity.getTransactionType() == TransactionType.WITHDRAWAL) {
+
+            if (accountEntity.getBalance().compareTo(transactionEntity.getAmount()) >= 0) {
+
+                accountEntity.setBalance(
+                        accountEntity.getBalance().subtract(transactionEntity.getAmount())
+                );
+
+                transactionEntity.setTransactionStatus(TransactionStatus.ACCEPTED);
+
+            } else {
+                transactionEntity.setTransactionStatus(TransactionStatus.REJECTED);
+            }
+        }
+
+        accountRepository.save(accountEntity);
+
+        return toResponseDTO(transactionRepository.save(transactionEntity));
     }
 }

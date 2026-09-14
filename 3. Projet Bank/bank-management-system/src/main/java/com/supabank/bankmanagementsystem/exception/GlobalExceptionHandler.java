@@ -28,6 +28,17 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(TransactionUpdateNotAllowedException.class)
+    public ResponseEntity<String> handleTransactionUpdateNotAllowedException(TransactionUpdateNotAllowedException  e) {
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(TransactionProcessingNotAllowedException.class)
+    public ResponseEntity<String> handleTransactionProcessingNotAllowedException(
+            TransactionProcessingNotAllowedException e) {
+
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+    }
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity <Map<String,String>> handleMethodArgumentNotValidException(MethodArgumentNotValidException  e) {
         Map<String, String> errors = e.getBindingResult()
