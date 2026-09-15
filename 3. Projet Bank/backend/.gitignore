@@ -1,4 +1,7 @@
 HELP.md
+# Configuration locale (peut contenir des identifiants)
+src/main/resources/application.yml
+src/main/resources/application.yaml
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
