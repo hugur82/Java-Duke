@@ -34,7 +34,6 @@ public class CustomerService {
         customerEntity.setPhone(customerRequestDTO.getPhone());
         customerEntity.setEmail(customerRequestDTO.getEmail());
         customerEntity.setPassword(customerRequestDTO.getPassword());
-        customerEntity.setRole(customerRequestDTO.getRole());
         customerEntity.setAddress(customerRequestDTO.getAddress());
         customerEntity.setPostalCode(customerRequestDTO.getPostalCode());
         customerEntity.setCity(customerRequestDTO.getCity());
@@ -46,7 +45,7 @@ public class CustomerService {
     }
 
     private CustomerResponseDTO toResponseDTO(CustomerEntity customer) {
-        return new CustomerResponseDTO(customer.getCustomerId(), customer.getFirstName(), customer.getLastName(), customer.getEmail(), customer.getPhone(), customer.getBirthDate(),customer.getRole(), customer.getAddress(), customer.getPostalCode(), customer.getCity(), customer.getStatus());
+        return new CustomerResponseDTO(customer.getCustomerId(), customer.getFirstName(), customer.getLastName(), customer.getEmail(), customer.getPhone(), customer.getBirthDate(), customer.getAddress(), customer.getPostalCode(), customer.getCity(), customer.getStatus());
     }
 
     public CustomerResponseDTO updateById(Long id, CustomerRequestDTO customerRequestDTO) {
@@ -61,7 +60,6 @@ public class CustomerService {
         customerEntity.setPhone(customerRequestDTO.getPhone());
         customerEntity.setEmail(customerRequestDTO.getEmail());
         customerEntity.setPassword(customerRequestDTO.getPassword());
-        customerEntity.setRole(customerRequestDTO.getRole());
         customerEntity.setAddress(customerRequestDTO.getAddress());
         customerEntity.setPostalCode(customerRequestDTO.getPostalCode());
         customerEntity.setCity(customerRequestDTO.getCity());

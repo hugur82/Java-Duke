@@ -38,10 +38,6 @@ public class CustomerEntity {
     @Column(name = "password_hash",nullable = false)
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role;
-
     private String address;
 
     @Column(name = "postal_code")

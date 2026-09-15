@@ -1,7 +1,6 @@
 package com.supabank.bankmanagementsystem.dto;
 
 import com.supabank.bankmanagementsystem.entity.CustomerStatus;
-import com.supabank.bankmanagementsystem.entity.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -26,8 +25,6 @@ public class CustomerRequestDTO {
     private String email;
     @NotBlank
     private String password;
-    @NotNull
-    private Role role;
     private String address;
     private String postalCode;
     private String city;

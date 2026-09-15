@@ -16,7 +16,6 @@ CREATE TABLE customer (
     phone VARCHAR(30),
     email VARCHAR(150) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('USER', 'ADMIN') NOT NULL DEFAULT 'USER',
     address VARCHAR(255),
     postal_code VARCHAR(20),
     city VARCHAR(100),
