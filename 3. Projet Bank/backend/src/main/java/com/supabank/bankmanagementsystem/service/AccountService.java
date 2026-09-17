@@ -57,7 +57,7 @@ public class AccountService {
     }
 
     private AccountResponseDTO toResponseDTO(AccountEntity account) {
-        return new AccountResponseDTO(account.getAccountId(),account.getIban(),account.getAccountNumber(),account.getBalance(),account.getCreationDate(),account.getAccountType(),account.getAccountStatus(), account.getCustomer().getCustomerId());
+        return new AccountResponseDTO(account.getAccountId(),account.getIban(),account.getAccountNumber(),account.getBalance(),account.getCreationDate(),account.getAccountType(),account.getAccountStatus(), account.getCustomer().getCustomerId(),account.getCustomer().getFirstName(),account.getCustomer().getLastName());
     }
 
     private String generateUniqueAccountNumber() {

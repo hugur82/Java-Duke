@@ -1,10 +1,33 @@
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+
+import Header from "./components/layout/Header";
+import Sidebar from "./components/layout/Sidebar";
+
+import Accounts from "./pages/Accounts";
+import Customers from "./pages/Customers";
+import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+import Transactions from "./pages/Transactions";
+
 function App() {
   return (
-    <>
-      <div className="p-8">
-        <h1 className="text-3xl font-bold underline">Bank peak</h1>
+    <BrowserRouter>
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-950">
+        <Sidebar />
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Header />
+
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/customers" element={<Customers />} />
+            <Route path="/accounts" element={<Accounts />} />
+            <Route path="/transactions" element={<Transactions />} />
+            <Route path="/profile" element={<Profile />} />
+          </Routes>
+        </div>
       </div>
-    </>
+    </BrowserRouter>
   );
 }
 

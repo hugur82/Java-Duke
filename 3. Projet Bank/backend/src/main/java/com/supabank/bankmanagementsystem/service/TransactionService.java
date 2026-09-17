@@ -34,13 +34,21 @@ public class TransactionService {
     }
 
     public TransactionResponseDTO toResponseDTO(TransactionEntity transactionEntity) {
-        return new TransactionResponseDTO(transactionEntity.getTransactionId(),
+        return new TransactionResponseDTO(
+                transactionEntity.getTransactionId(),
                 transactionEntity.getTransactionDate(),
                 transactionEntity.getAmount(),
                 transactionEntity.getTransactionType(),
                 transactionEntity.getDescription(),
                 transactionEntity.getTransactionStatus(),
-                transactionEntity.getAccount().getAccountId());
+
+                transactionEntity.getAccount().getAccountId(),
+                transactionEntity.getAccount().getAccountNumber(),
+
+                transactionEntity.getAccount().getCustomer().getCustomerId(),
+                transactionEntity.getAccount().getCustomer().getFirstName(),
+                transactionEntity.getAccount().getCustomer().getLastName()
+        );
     }
 
     public TransactionResponseDTO createTransaction(TransactionCreateRequestDTO transactionCreateRequestDTO) {
