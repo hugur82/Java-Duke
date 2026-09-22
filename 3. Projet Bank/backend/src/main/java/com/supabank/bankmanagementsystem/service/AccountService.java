@@ -6,10 +6,12 @@ import com.supabank.bankmanagementsystem.dto.AccountUpdateRequestDTO;
 import com.supabank.bankmanagementsystem.entity.AccountEntity;
 import com.supabank.bankmanagementsystem.entity.AccountStatus;
 import com.supabank.bankmanagementsystem.entity.CustomerEntity;
+import com.supabank.bankmanagementsystem.exception.AccountDeletionNotAllowedException;
 import com.supabank.bankmanagementsystem.exception.AccountNotFoundException;
 import com.supabank.bankmanagementsystem.exception.CustomerNotFoundException;
 import com.supabank.bankmanagementsystem.repository.AccountRepository;
 import com.supabank.bankmanagementsystem.repository.CustomerRepository;
+import com.supabank.bankmanagementsystem.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -18,13 +20,14 @@ import java.util.List;
 
 @Service
 public class AccountService {
-    private  final AccountRepository accountRepository;
-    private  final CustomerRepository customerRepository;
+    private final AccountRepository accountRepository;
+    private final CustomerRepository customerRepository;
+    private final TransactionRepository transactionRepository;
 
-
-    public AccountService(AccountRepository accountRepository, CustomerRepository customerRepository) {
+    public AccountService(AccountRepository accountRepository, CustomerRepository customerRepository, TransactionRepository transactionRepository) {
         this.accountRepository = accountRepository;
         this.customerRepository = customerRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     public List<AccountResponseDTO> getAllAccounts(){
@@ -96,7 +99,20 @@ public class AccountService {
     }
 
     public void deleteAccountById(Long accountId) {
-        AccountEntity accountEntity = accountRepository.findById(accountId).orElseThrow(() -> new AccountNotFoundException("Account not found with id " + accountId));
+
+        AccountEntity accountEntity = accountRepository
+                .findById(accountId)
+                .orElseThrow(() ->
+                        new AccountNotFoundException(
+                                "Account not found with id " + accountId
+                        ));
+
+        if (transactionRepository.existsByAccountAccountId(accountId)) {
+            throw new AccountDeletionNotAllowedException(
+                    "Account cannot be deleted because transactions exist."
+            );
+        }
+
         accountRepository.delete(accountEntity);
     }
 

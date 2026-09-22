@@ -1,4 +1,5 @@
-const API_URL = "http://localhost:8080";
+const API_URL = "http://192.168.1.101:8080";
+//const API_URL = "http://localhost:8080";
 
 const username = "root";
 const password = "123qwertz";

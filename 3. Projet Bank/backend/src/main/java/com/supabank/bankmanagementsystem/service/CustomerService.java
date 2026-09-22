@@ -3,8 +3,12 @@ package com.supabank.bankmanagementsystem.service;
 import com.supabank.bankmanagementsystem.dto.CustomerRequestDTO;
 import com.supabank.bankmanagementsystem.dto.CustomerResponseDTO;
 import com.supabank.bankmanagementsystem.entity.CustomerEntity;
+import com.supabank.bankmanagementsystem.exception.CustomerDeletionNotAllowedException;
 import com.supabank.bankmanagementsystem.exception.CustomerNotFoundException;
+import com.supabank.bankmanagementsystem.repository.AccountRepository;
 import com.supabank.bankmanagementsystem.repository.CustomerRepository;
+import com.supabank.bankmanagementsystem.repository.TransactionRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,9 +17,15 @@ import java.util.List;
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final AccountRepository accountRepository;
+    private final TransactionRepository transactionRepository;
 
-    public CustomerService(CustomerRepository customerRepository) {
+    public CustomerService(CustomerRepository customerRepository,
+                           AccountRepository accountRepository,
+                           TransactionRepository transactionRepository) {
         this.customerRepository = customerRepository;
+        this.accountRepository = accountRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     public List<CustomerResponseDTO> findAll() {
@@ -70,15 +80,24 @@ public class CustomerService {
         return toResponseDTO(savedCustomer);
     }
 
+    @Transactional
     public void deleteById(Long id) {
-        CustomerEntity customerEntity=customerRepository
+
+        CustomerEntity customerEntity = customerRepository
                 .findById(id)
-                .orElseThrow(()-> new CustomerNotFoundException(
-                        "Id "+id +" not found for delete"));
+                .orElseThrow(() -> new CustomerNotFoundException(
+                        "Id " + id + " not found for delete"));
+
+        if (transactionRepository.existsByCustomerId(id)) {
+            throw new CustomerDeletionNotAllowedException(
+                    "Customer cannot be deleted because transactions exist."
+            );
+        }
+
+        accountRepository.deleteByCustomerCustomerId(id);
 
         customerRepository.delete(customerEntity);
     }
-
     public CustomerResponseDTO findCustomerById(Long id) {
         CustomerEntity customerEntity = customerRepository
                 .findById(id)

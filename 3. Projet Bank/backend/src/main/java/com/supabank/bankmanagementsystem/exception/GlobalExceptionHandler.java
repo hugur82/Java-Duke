@@ -39,6 +39,21 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
     }
+
+    @ExceptionHandler(CustomerDeletionNotAllowedException.class)
+    public ResponseEntity<String> handleCustomerDeletionNotAllowed(
+            CustomerDeletionNotAllowedException e) {
+
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(AccountDeletionNotAllowedException.class)
+    public ResponseEntity<String> handleAccountDeletionNotAllowedException(
+            AccountDeletionNotAllowedException e) {
+
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity <Map<String,String>> handleMethodArgumentNotValidException(MethodArgumentNotValidException  e) {
         Map<String, String> errors = e.getBindingResult()

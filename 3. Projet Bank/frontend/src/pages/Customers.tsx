@@ -1,45 +1,81 @@
 import { useEffect, useState } from "react";
-import { getCustomers, type Customer } from "../api/customerApi";
 
-interface Customer {
-  customerId: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  city: string;
-  status: string;
-}
+import { getCustomers, type Customer } from "../api/customerApi";
+import CustomerForm from "../components/customer/CustomerForm";
 
 function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     getCustomers()
       .then((data) => {
-        setCustomers(data);
+        if (!cancelled) {
+          setCustomers(data);
+        }
       })
       .catch(() => {
-        setError("Unable to load customers.");
+        if (!cancelled) {
+          setError("Unable to load customers.");
+        }
       })
       .finally(() => {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  const loadCustomers = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const data = await getCustomers();
+
+      setCustomers(data);
+    } catch {
+      setError("Unable to load customers.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCustomerCreated = async () => {
+    setShowForm(false);
+    await loadCustomers();
+  };
 
   return (
     <main className="flex-1 overflow-y-auto bg-gray-50 p-8 dark:bg-gray-950">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Customers
-          </h1>
+        {/* Header */}
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Customers
+            </h1>
 
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage bank customers.
-          </p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Manage bank customers.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowForm(true)}
+            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+          >
+            + Add Customer
+          </button>
         </div>
 
         {loading && (
@@ -112,7 +148,19 @@ function Customers() {
                         {customer.city}
                       </td>
 
-                      <td className="px-6 py-4 text-sm">{customer.status}</td>
+                      <td className="px-6 py-4 text-sm">
+                        <span
+                          className={
+                            customer.status === "ACTIVE"
+                              ? "rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                              : customer.status === "SUSPENDED"
+                                ? "rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                : "rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                          }
+                        >
+                          {customer.status}
+                        </span>
+                      </td>
                     </tr>
                   ))
                 ) : (
@@ -128,6 +176,13 @@ function Customers() {
               </tbody>
             </table>
           </div>
+        )}
+
+        {showForm && (
+          <CustomerForm
+            onSuccess={handleCustomerCreated}
+            onCancel={() => setShowForm(false)}
+          />
         )}
       </div>
     </main>
