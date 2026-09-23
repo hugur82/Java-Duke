@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { useNavigate } from "react-router-dom";
 import { getCustomers, type Customer } from "../api/customerApi";
 import CustomerForm from "../components/customer/CustomerForm";
 
@@ -8,6 +9,7 @@ function Customers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let cancelled = false;
@@ -126,7 +128,10 @@ function Customers() {
                   customers.map((customer) => (
                     <tr
                       key={customer.customerId}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                      onClick={() =>
+                        navigate(`/customers/${customer.customerId}`)
+                      }
+                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
                     >
                       <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                         #{customer.customerId}

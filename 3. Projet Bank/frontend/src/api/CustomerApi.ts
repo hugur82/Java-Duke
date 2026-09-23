@@ -52,8 +52,12 @@ export async function createCustomer(
 export async function getCustomerById(customerId: number): Promise<Customer> {
   const response = await apiClient(`/api/customers/${customerId}`);
 
+  if (response.status === 404) {
+    throw new Error("Customer not found.");
+  }
+
   if (!response.ok) {
-    throw new Error("Failed to fetch customer");
+    throw new Error("Unable to load customer.");
   }
 
   return response.json();

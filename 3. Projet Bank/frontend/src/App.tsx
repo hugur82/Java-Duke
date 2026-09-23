@@ -2,11 +2,13 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import Header from "./components/layout/Header";
 import Sidebar from "./components/layout/Sidebar";
-
+import AccountDetails from "./pages/AccountDetails";
 import Accounts from "./pages/Accounts";
+import CustomerDetails from "./pages/CustomerDetails";
 import Customers from "./pages/Customers";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
+import TransactionDetails from "./pages/TransactionDetails";
 import Transactions from "./pages/Transactions";
 
 function App() {
@@ -21,8 +23,11 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/customers" element={<Customers />} />
+            <Route path="/customers/:id" element={<CustomerDetails />} />
             <Route path="/accounts" element={<Accounts />} />
+            <Route path="/accounts/:id" element={<AccountDetails />} />
             <Route path="/transactions" element={<Transactions />} />
+            <Route path="/transactions/:id" element={<TransactionDetails />} />
             <Route path="/profile" element={<Profile />} />
           </Routes>
         </div>

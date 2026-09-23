@@ -19,12 +19,24 @@ public class AccountResponseDTO {
     private LocalDateTime creationDate;
     private AccountType accountType;
     private AccountStatus accountStatus;
-
+    private BigDecimal openingBalance;
     private Long customerId;
     private String customerFirstName;
     private String customerLastName;
 
-    public AccountResponseDTO(Long accountId, String iban, String accountNumber, BigDecimal balance, LocalDateTime creationDate, AccountType accountType, AccountStatus accountStatus, Long customerId, String customerFirstName, String customerLastName) {
+    public AccountResponseDTO(
+            Long accountId,
+            String iban,
+            String accountNumber,
+            BigDecimal balance,
+            LocalDateTime creationDate,
+            AccountType accountType,
+            AccountStatus accountStatus,
+            BigDecimal openingBalance,
+            Long customerId,
+            String customerFirstName,
+            String customerLastName
+    ) {
         this.accountId = accountId;
         this.iban = iban;
         this.accountNumber = accountNumber;
@@ -32,6 +44,7 @@ public class AccountResponseDTO {
         this.creationDate = creationDate;
         this.accountType = accountType;
         this.accountStatus = accountStatus;
+        this.openingBalance = openingBalance;
         this.customerId = customerId;
         this.customerFirstName = customerFirstName;
         this.customerLastName = customerLastName;

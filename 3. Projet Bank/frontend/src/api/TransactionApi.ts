@@ -25,3 +25,19 @@ export async function getTransactions(): Promise<Transaction[]> {
 
   return response.json();
 }
+
+export async function getTransactionById(
+  transactionId: number,
+): Promise<Transaction> {
+  const response = await apiClient(`/api/transactions/${transactionId}`);
+
+  if (response.status === 404) {
+    throw new Error("Transaction not found.");
+  }
+
+  if (!response.ok) {
+    throw new Error("Unable to load transaction.");
+  }
+
+  return response.json();
+}

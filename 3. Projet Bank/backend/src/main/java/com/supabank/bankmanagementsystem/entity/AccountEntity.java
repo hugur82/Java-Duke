@@ -27,6 +27,9 @@ public class AccountEntity {
     @NotBlank
     private String accountNumber ;
 
+    @Column(name = "opening_balance", nullable = false)
+    private BigDecimal openingBalance = BigDecimal.ZERO;
+
     private BigDecimal balance;
 
     @Column(name = "creation_date")
