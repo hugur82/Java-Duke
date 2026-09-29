@@ -12,6 +12,11 @@ import com.supabank.bankmanagementsystem.repository.AccountRepository;
 import com.supabank.bankmanagementsystem.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -145,5 +150,44 @@ public class TransactionService {
         accountRepository.save(accountEntity);
 
         return toResponseDTO(transactionRepository.save(transactionEntity));
+    }
+
+    public Page<TransactionResponseDTO> searchTransactions(
+            String firstName,
+            String lastName,
+            Long accountId,
+            int page,
+            int size,
+            String sortBy,
+            String direction
+    ) {
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(
+                        Sort.Direction.fromString(direction),
+                        sortBy
+                )
+        );
+
+        String normalizedFirstName = normalizeSearchParameter(firstName);
+        String normalizedLastName = normalizeSearchParameter(lastName);
+
+        return transactionRepository
+                .searchTransactions(
+                        normalizedFirstName,
+                        normalizedLastName,
+                        accountId,
+                        pageable
+                )
+                .map(this::toResponseDTO);
+    }
+
+    private String normalizeSearchParameter(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        return value.trim();
     }
 }

@@ -14,11 +14,52 @@ export interface Account {
   customerLastName: string;
 }
 
+export interface AccountPage {
+  content: Account[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
 export async function getAccounts(): Promise<Account[]> {
   const response = await apiClient("/api/accounts");
 
   if (!response.ok) {
     throw new Error("Failed to fetch accounts");
+  }
+
+  return response.json();
+}
+
+export async function searchAccounts(
+  firstName: string,
+  lastName: string,
+  accountNumber: string,
+  page = 0,
+  size = 20,
+): Promise<AccountPage> {
+  const params = new URLSearchParams();
+
+  if (firstName.trim()) {
+    params.set("firstName", firstName.trim());
+  }
+
+  if (lastName.trim()) {
+    params.set("lastName", lastName.trim());
+  }
+
+  if (accountNumber.trim()) {
+    params.set("accountNumber", accountNumber.trim());
+  }
+
+  params.set("page", String(page));
+  params.set("size", String(size));
+
+  const response = await apiClient(`/api/accounts/search?${params.toString()}`);
+
+  if (!response.ok) {
+    throw new Error("Unable to search accounts.");
   }
 
   return response.json();
