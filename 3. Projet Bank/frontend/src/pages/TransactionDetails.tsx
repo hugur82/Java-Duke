@@ -128,6 +128,17 @@ function TransactionDetails() {
           </h2>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="md:col-span-2 ">
+              <p className="text-gray-400">Customer</p>
+
+              <button
+                type="button"
+                onClick={() => navigate(`/customers/${transaction.customerId}`)}
+                className="mt-2 font-medium text-gray-900 hover:underline dark:text-white text-5xl"
+              >
+                {transaction.customerFirstName} {transaction.customerLastName}
+              </button>
+            </div>
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Transaction ID
@@ -184,7 +195,7 @@ function TransactionDetails() {
               </p>
             </div>
 
-            <div className="md:col-span-2">
+            <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Description
               </p>

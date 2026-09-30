@@ -22,6 +22,7 @@ export interface CustomerCreateRequest {
   address: string;
   postalCode: string;
   city: string;
+  status: CustomerStatus;
 }
 
 export async function getCustomers(): Promise<Customer[]> {

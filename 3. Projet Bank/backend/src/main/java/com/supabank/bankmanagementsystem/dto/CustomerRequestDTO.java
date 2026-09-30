@@ -19,14 +19,18 @@ public class CustomerRequestDTO {
     private String lastName;
     @NotNull
     private LocalDate birthDate;
+    @NotBlank
     private String phone;
     @NotBlank
     @Email
     private String email;
     @NotBlank
     private String password;
+    @NotBlank
     private String address;
+    @NotBlank
     private String postalCode;
+    @NotBlank
     private String city;
     @NotNull
     private CustomerStatus status;
