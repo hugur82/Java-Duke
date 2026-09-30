@@ -8,6 +8,9 @@ export interface Customer {
   lastName: string;
   email: string;
   phone: string;
+  birthDate: string;
+  address: string;
+  postalCode: string;
   city: string;
   status: CustomerStatus;
 }
@@ -23,6 +26,23 @@ export interface CustomerCreateRequest {
   postalCode: string;
   city: string;
   status: CustomerStatus;
+}
+
+export interface CustomerUpdateRequest {
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  phone: string;
+  email: string;
+  address: string;
+  postalCode: string;
+  city: string;
+  status: CustomerStatus;
+}
+
+export interface CustomerPasswordUpdateRequest {
+  currentPassword: string;
+  newPassword: string;
 }
 
 export async function getCustomers(): Promise<Customer[]> {
@@ -66,7 +86,7 @@ export async function getCustomerById(customerId: number): Promise<Customer> {
 
 export async function updateCustomer(
   customerId: number,
-  customer: CustomerCreateRequest,
+  customer: CustomerUpdateRequest,
 ): Promise<Customer> {
   const response = await apiClient(`/api/customers/${customerId}`, {
     method: "PUT",
@@ -78,6 +98,20 @@ export async function updateCustomer(
   }
 
   return response.json();
+}
+
+export async function updateCustomerPassword(
+  customerId: number,
+  password: CustomerPasswordUpdateRequest,
+): Promise<void> {
+  const response = await apiClient(`/api/customers/${customerId}/password`, {
+    method: "PATCH",
+    body: JSON.stringify(password),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update customer password");
+  }
 }
 
 export async function deleteCustomer(customerId: number): Promise<void> {

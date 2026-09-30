@@ -2,87 +2,152 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { getAccounts, type Account } from "../api/accountApi";
-import { getCustomerById, type Customer } from "../api/customerApi";
+import {
+  deleteCustomer,
+  getCustomerById,
+  updateCustomerPassword,
+  type Customer,
+} from "../api/customerApi";
 import { getTransactions, type Transaction } from "../api/transactionApi";
+import CustomerForm from "../components/customer/CustomerForm";
 
 function CustomerDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const customerId = id ? Number(id) : NaN;
-  const invalidId = !id || Number.isNaN(customerId);
-
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  const [loading, setLoading] = useState(!invalidId);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [showEditForm, setShowEditForm] = useState(false);
+
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
   useEffect(() => {
-    if (invalidId) {
+    if (!id) {
+      setError("Customer ID is missing.");
+      setLoading(false);
       return;
     }
 
-    let cancelled = false;
+    const customerId = Number(id);
 
-    Promise.all([getCustomerById(customerId), getAccounts(), getTransactions()])
-      .then(([customerData, accountsData, transactionsData]) => {
-        if (cancelled) {
-          return;
-        }
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const [customerData, accountsData, transactionsData] =
+          await Promise.all([
+            getCustomerById(customerId),
+            getAccounts(),
+            getTransactions(),
+          ]);
 
         setCustomer(customerData);
 
-        const customerAccounts = accountsData.filter(
-          (account) => account.customerId === customerId,
+        setAccounts(
+          accountsData.filter((account) => account.customerId === customerId),
         );
 
-        setAccounts(customerAccounts);
-
-        const customerAccountIds = new Set(
-          customerAccounts.map((account) => account.accountId),
+        setTransactions(
+          transactionsData.filter(
+            (transaction) => transaction.customerId === customerId,
+          ),
         );
-
-        const customerTransactions = transactionsData.filter((transaction) =>
-          customerAccountIds.has(transaction.accountId),
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Unable to load customer.",
         );
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        setTransactions(customerTransactions);
-      })
-      .catch((error: Error) => {
-        if (!cancelled) {
-          setError(error.message);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
+    loadData();
+  }, [id]);
+
+  const reloadCustomer = async () => {
+    if (!id) {
+      return;
+    }
+
+    const customerData = await getCustomerById(Number(id));
+    setCustomer(customerData);
+  };
+
+  const handleDelete = async () => {
+    if (!customer) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${customer.firstName} ${customer.lastName}?`,
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteCustomer(customer.customerId);
+      navigate("/customers");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Unable to delete customer.",
+      );
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!customer) return;
+
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError("Please fill in all password fields.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New passwords do not match.");
+      return;
+    }
+
+    try {
+      setPasswordLoading(true);
+
+      await updateCustomerPassword(customer.customerId, {
+        currentPassword,
+        newPassword,
       });
 
-    return () => {
-      cancelled = true;
-    };
-  }, [customerId, invalidId]);
+      setPasswordSuccess("Password updated successfully.");
 
-  if (invalidId) {
-    return (
-      <main className="flex-1 overflow-y-auto bg-gray-50 p-8 dark:bg-gray-950">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-sm font-medium text-red-600 dark:text-red-400">
-            Invalid customer ID.
-          </p>
-        </div>
-      </main>
-    );
-  }
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      setPasswordError(
+        err instanceof Error ? err.message : "Unable to update password.",
+      );
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
 
   if (loading) {
     return (
       <main className="flex-1 overflow-y-auto bg-gray-50 p-8 dark:bg-gray-950">
         <div className="mx-auto max-w-7xl">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-gray-600 dark:text-gray-400">
             Loading customer...
           </p>
         </div>
@@ -94,52 +159,43 @@ function CustomerDetails() {
     return (
       <main className="flex-1 overflow-y-auto bg-gray-50 p-8 dark:bg-gray-950">
         <div className="mx-auto max-w-7xl">
-          <button
-            type="button"
-            onClick={() => navigate("/customers")}
-            className="mb-4 text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-          >
-            ← Back to Customers
-          </button>
-
-          <p className="text-sm font-medium text-red-600 dark:text-red-400">
+          <div className="rounded-lg bg-red-100 px-4 py-3 text-sm font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
             {error}
-          </p>
+          </div>
         </div>
       </main>
     );
   }
 
   if (!customer) {
-    return null;
+    return (
+      <main className="flex-1 overflow-y-auto bg-gray-50 p-8 dark:bg-gray-950">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-gray-600 dark:text-gray-400">
+            Customer not found.
+          </p>
+        </div>
+      </main>
+    );
   }
 
   return (
     <main className="flex-1 overflow-y-auto bg-gray-50 p-8 dark:bg-gray-950">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <button
-              type="button"
-              onClick={() => navigate("/customers")}
-              className="mb-3 text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-            >
-              ← Back to Customers
-            </button>
-
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Customer Details
-            </h1>
-
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Customer #{customer.customerId}
-            </p>
-          </div>
+        <div className="mb-6 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => navigate("/customers")}
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            Back to Customers
+          </button>
 
           <div className="flex gap-3">
             <button
               type="button"
+              onClick={() => setShowEditForm(true)}
               className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
             >
               Edit
@@ -147,7 +203,20 @@ function CustomerDetails() {
 
             <button
               type="button"
-              className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+              onClick={() => {
+                setShowPasswordForm(true);
+                setPasswordError("");
+                setPasswordSuccess("");
+              }}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              Change Password
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
             >
               Delete
             </button>
@@ -155,209 +224,343 @@ function CustomerDetails() {
         </div>
 
         {/* Customer information */}
-        <section className="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="mb-6 text-lg font-semibold text-gray-900 dark:text-white">
-            Personal Information
-          </h2>
+        <div className="mb-8 rounded-xl bg-white p-6 shadow dark:bg-gray-900">
+          <h1 className="mb-6 text-3xl font-bold text-gray-900 dark:text-white">
+            {customer.firstName} {customer.lastName}
+          </h1>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                First Name
+                First name
               </p>
-              <p className="mt-1 font-medium text-gray-900 dark:text-white">
+
+              <p className="font-medium text-gray-900 dark:text-white">
                 {customer.firstName}
               </p>
             </div>
 
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Last Name
+                Last name
               </p>
-              <p className="mt-1 font-medium text-gray-900 dark:text-white">
+
+              <p className="font-medium text-gray-900 dark:text-white">
                 {customer.lastName}
               </p>
             </div>
 
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
-              <p className="mt-1 font-medium text-gray-900 dark:text-white">
+
+              <p className="font-medium text-gray-900 dark:text-white">
                 {customer.email}
               </p>
             </div>
 
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Phone</p>
-              <p className="mt-1 font-medium text-gray-900 dark:text-white">
+
+              <p className="font-medium text-gray-900 dark:text-white">
                 {customer.phone}
               </p>
             </div>
 
             <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Birth date
+              </p>
+
+              <p className="font-medium text-gray-900 dark:text-white">
+                {customer.birthDate}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Address
+              </p>
+
+              <p className="font-medium text-gray-900 dark:text-white">
+                {customer.address}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Postal code
+              </p>
+
+              <p className="font-medium text-gray-900 dark:text-white">
+                {customer.postalCode}
+              </p>
+            </div>
+
+            <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">City</p>
-              <p className="mt-1 font-medium text-gray-900 dark:text-white">
+
+              <p className="font-medium text-gray-900 dark:text-white">
                 {customer.city}
               </p>
             </div>
 
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
-              <p className="mt-1 font-medium text-gray-900 dark:text-white">
+
+              <p className="font-medium text-gray-900 dark:text-white">
                 {customer.status}
               </p>
             </div>
           </div>
-        </section>
+        </div>
 
         {/* Accounts */}
-        <section className="mb-8 rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Accounts
-            </h2>
+        <div className="mb-8">
+          <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">
+            Accounts
+          </h2>
 
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {accounts.length} account
-              {accounts.length !== 1 ? "s" : ""}
-            </p>
-          </div>
+          <div className="overflow-hidden rounded-xl bg-white shadow dark:bg-gray-900">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+                <tr>
+                  <th className="px-4 py-3 text-gray-900 dark:text-white">
+                    Account number
+                  </th>
 
-          {accounts.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-gray-50 dark:bg-gray-800">
-                  <tr>
-                    <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-                      Account
-                    </th>
-                    <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-                      IBAN
-                    </th>
-                    <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-                      Balance
-                    </th>
-                    <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-                      Status
-                    </th>
+                  <th className="px-4 py-3 text-gray-900 dark:text-white">
+                    Type
+                  </th>
+
+                  <th className="px-4 py-3 text-gray-900 dark:text-white">
+                    Balance
+                  </th>
+
+                  <th className="px-4 py-3 text-gray-900 dark:text-white">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {accounts.map((account) => (
+                  <tr
+                    key={account.accountId}
+                    onClick={() => navigate(`/accounts/${account.accountId}`)}
+                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
+                  >
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                      {account.accountNumber}
+                    </td>
+
+                    <td className="px-4 py-3 text-gray-900 dark:text-white">
+                      {account.accountType}
+                    </td>
+
+                    <td className="px-4 py-3 text-gray-900 dark:text-white">
+                      {account.balance}
+                    </td>
+
+                    <td className="px-4 py-3 text-gray-900 dark:text-white">
+                      {account.accountStatus}
+                    </td>
                   </tr>
-                </thead>
+                ))}
 
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                  {accounts.map((account) => (
-                    <tr
-                      key={account.accountId}
-                      onClick={() => navigate(`/accounts/${account.accountId}`)}
-                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                {accounts.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-4 py-6 text-center text-gray-500 dark:text-gray-400"
                     >
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                        #{account.accountId}
-                      </td>
-
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                        {account.accountType}
-                      </td>
-
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                        {account.iban}
-                      </td>
-
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                        {account.balance}
-                      </td>
-
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                        {account.accountStatus}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-              No accounts found.
-            </p>
-          )}
-        </section>
+                      No accounts found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
         {/* Transactions */}
-        <section className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Transactions
-            </h2>
+        <div>
+          <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">
+            Transactions
+          </h2>
 
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {transactions.length} transaction
-              {transactions.length !== 1 ? "s" : ""}
-            </p>
-          </div>
+          <div className="overflow-hidden rounded-xl bg-white shadow dark:bg-gray-900">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+                <tr>
+                  <th className="px-4 py-3 text-gray-900 dark:text-white">
+                    Date
+                  </th>
 
-          {transactions.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-gray-50 dark:bg-gray-800">
-                  <tr>
-                    <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-                      Account
-                    </th>
-                    <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-                      Amount
-                    </th>
-                    <th className="px-6 py-3 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-                      Status
-                    </th>
+                  <th className="px-4 py-3 text-gray-900 dark:text-white">
+                    Account
+                  </th>
+
+                  <th className="px-4 py-3 text-gray-900 dark:text-white">
+                    Type
+                  </th>
+
+                  <th className="px-4 py-3 text-gray-900 dark:text-white">
+                    Amount
+                  </th>
+
+                  <th className="px-4 py-3 text-gray-900 dark:text-white">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {transactions.map((transaction) => (
+                  <tr
+                    key={transaction.transactionId}
+                    onClick={() =>
+                      navigate(`/transactions/${transaction.transactionId}`)
+                    }
+                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
+                  >
+                    <td className="px-4 py-3 text-gray-900 dark:text-white">
+                      {transaction.transactionDate}
+                    </td>
+
+                    <td className="px-4 py-3 text-gray-900 dark:text-white">
+                      {transaction.accountNumber}
+                    </td>
+
+                    <td className="px-4 py-3 text-gray-900 dark:text-white">
+                      {transaction.transactionType}
+                    </td>
+
+                    <td className="px-4 py-3 text-gray-900 dark:text-white">
+                      {transaction.amount}
+                    </td>
+
+                    <td className="px-4 py-3 text-gray-900 dark:text-white">
+                      {transaction.transactionStatus}
+                    </td>
                   </tr>
-                </thead>
+                ))}
 
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                  {transactions.map((transaction) => (
-                    <tr
-                      key={transaction.transactionId}
-                      onClick={() =>
-                        navigate(`/transactions/${transaction.transactionId}`)
-                      }
-                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                {transactions.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-4 py-6 text-center text-gray-500 dark:text-gray-400"
                     >
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                        {new Date(transaction.transactionDate).toLocaleString()}
-                      </td>
+                      No transactions found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                        #{transaction.accountId}
-                      </td>
+        {/* Edit customer popup */}
+        {showEditForm && customer && (
+          <CustomerForm
+            customer={customer}
+            onSuccess={async () => {
+              setShowEditForm(false);
+              await reloadCustomer();
+            }}
+            onCancel={() => setShowEditForm(false)}
+          />
+        )}
 
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                        {transaction.transactionType}
-                      </td>
+        {/* Change password popup */}
+        {showPasswordForm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900">
+              <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
+                Change Password
+              </h2>
 
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                        {transaction.amount}
-                      </td>
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Current password
+                  </label>
 
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                        {transaction.transactionStatus}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    New password
+                  </label>
+
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Confirm new password
+                  </label>
+
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+
+                {passwordError && (
+                  <div className="rounded-lg bg-red-100 px-4 py-3 text-sm font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                    {passwordError}
+                  </div>
+                )}
+
+                {passwordSuccess && (
+                  <div className="rounded-lg bg-green-100 px-4 py-3 text-sm font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    {passwordSuccess}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordForm(false);
+                    setCurrentPassword("");
+                    setNewPassword("");
+                    setConfirmPassword("");
+                    setPasswordError("");
+                    setPasswordSuccess("");
+                  }}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleChangePassword}
+                  disabled={passwordLoading}
+                  className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                >
+                  {passwordLoading ? "Updating..." : "Change Password"}
+                </button>
+              </div>
             </div>
-          ) : (
-            <p className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-              No transactions found.
-            </p>
-          )}
-        </section>
+          </div>
+        )}
       </div>
     </main>
   );

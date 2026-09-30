@@ -1,6 +1,8 @@
 package com.supabank.bankmanagementsystem.controller;
 
 import com.supabank.bankmanagementsystem.dto.CustomerRequestDTO;
+import com.supabank.bankmanagementsystem.dto.CustomerRequestPasswordUpdateDTO;
+import com.supabank.bankmanagementsystem.dto.CustomerRequestUpdateDTO;
 import com.supabank.bankmanagementsystem.dto.CustomerResponseDTO;
 import com.supabank.bankmanagementsystem.service.CustomerService;
 import jakarta.validation.Valid;
@@ -35,8 +37,16 @@ public class CustomerController {
     }
 
     @PutMapping("/customers/{id}")
-    public CustomerResponseDTO updateCustomer(@RequestBody @Valid CustomerRequestDTO customerRequestDTO, @PathVariable("id") Long id) {
-        return customerService.updateById(id, customerRequestDTO);
+    public CustomerResponseDTO updateCustomer(@RequestBody @Valid CustomerRequestUpdateDTO customerRequestUpdateDTO, @PathVariable("id") Long id) {
+        return customerService.updateById(id, customerRequestUpdateDTO);
+    }
+
+    @PatchMapping("/customers/{id}/password")
+    public void updatePassword(
+            @RequestBody @Valid CustomerRequestPasswordUpdateDTO passwordUpdateDTO,
+            @PathVariable("id") Long id) {
+
+        customerService.updatePassword(id, passwordUpdateDTO);
     }
 
     @DeleteMapping("/customers/{id}")

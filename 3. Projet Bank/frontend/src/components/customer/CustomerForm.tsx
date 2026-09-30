@@ -1,16 +1,24 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   createCustomer,
+  updateCustomer,
+  type Customer,
   type CustomerCreateRequest,
+  type CustomerUpdateRequest,
 } from "../../api/customerApi";
 
 interface CustomerFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  customer?: Customer;
 }
 
-function CustomerForm({ onSuccess, onCancel }: CustomerFormProps) {
-  const [formData, setFormData] = useState<CustomerCreateRequest>({
+function CustomerForm({ onSuccess, onCancel, customer }: CustomerFormProps) {
+  const isEditMode = Boolean(customer);
+
+  const [formData, setFormData] = useState<
+    CustomerCreateRequest | CustomerUpdateRequest
+  >({
     firstName: "",
     lastName: "",
     birthDate: "",
@@ -25,6 +33,22 @@ function CustomerForm({ onSuccess, onCancel }: CustomerFormProps) {
 
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (customer) {
+      setFormData({
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        birthDate: customer.birthDate,
+        phone: customer.phone,
+        email: customer.email,
+        address: customer.address,
+        postalCode: customer.postalCode,
+        city: customer.city,
+        status: customer.status,
+      });
+    }
+  }, [customer]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -42,10 +66,21 @@ function CustomerForm({ onSuccess, onCancel }: CustomerFormProps) {
     setSubmitting(true);
 
     try {
-      await createCustomer(formData);
+      if (isEditMode && customer) {
+        const { password, ...updateData } = formData as CustomerCreateRequest;
+
+        await updateCustomer(customer.customerId, updateData);
+      } else {
+        await createCustomer(formData as CustomerCreateRequest);
+      }
+
       onSuccess();
     } catch {
-      setError("Unable to create customer.");
+      setError(
+        isEditMode
+          ? "Unable to update customer."
+          : "Unable to create customer.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -56,11 +91,13 @@ function CustomerForm({ onSuccess, onCancel }: CustomerFormProps) {
       <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900">
         <div className="mb-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            Add Customer
+            {isEditMode ? "Edit Customer" : "Add Customer"}
           </h2>
 
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Create a new bank customer.
+            {isEditMode
+              ? "Update customer information."
+              : "Create a new bank customer."}
           </p>
         </div>
 
@@ -147,20 +184,22 @@ function CustomerForm({ onSuccess, onCancel }: CustomerFormProps) {
               />
             </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Password
-              </label>
+            {!isEditMode && (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Password
+                </label>
 
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              />
-            </div>
+                <input
+                  type="password"
+                  name="password"
+                  value={"password" in formData ? formData.password : ""}
+                  onChange={handleChange}
+                  required
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+              </div>
+            )}
 
             <div className="md:col-span-2">
               <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -222,7 +261,13 @@ function CustomerForm({ onSuccess, onCancel }: CustomerFormProps) {
               disabled={submitting}
               className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
             >
-              {submitting ? "Creating..." : "Create Customer"}
+              {submitting
+                ? isEditMode
+                  ? "Updating..."
+                  : "Creating..."
+                : isEditMode
+                  ? "Update Customer"
+                  : "Create Customer"}
             </button>
           </div>
         </form>
