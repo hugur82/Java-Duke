@@ -7,6 +7,7 @@ import com.supabank.bankmanagementsystem.entity.AccountEntity;
 import com.supabank.bankmanagementsystem.entity.AccountStatus;
 import com.supabank.bankmanagementsystem.entity.CustomerEntity;
 import com.supabank.bankmanagementsystem.exception.AccountDeletionNotAllowedException;
+import com.supabank.bankmanagementsystem.exception.AccountClosureNotAllowedException;
 import com.supabank.bankmanagementsystem.exception.AccountNotFoundException;
 import com.supabank.bankmanagementsystem.exception.CustomerNotFoundException;
 import com.supabank.bankmanagementsystem.repository.AccountRepository;
@@ -196,6 +197,13 @@ public class AccountService {
                                 "Account not found with id " + accountId
                         )
                 );
+
+        if (accountUpdateRequestDTO.getStatus() == AccountStatus.CLOSED
+                && accountEntity.getBalance().compareTo(BigDecimal.ZERO) != 0) {
+            throw new AccountClosureNotAllowedException(
+                    "Account cannot be closed because its balance is not zero."
+            );
+        }
 
         accountEntity.setAccountStatus(
                 accountUpdateRequestDTO.getStatus()

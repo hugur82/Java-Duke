@@ -54,6 +54,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(AccountClosureNotAllowedException.class)
+    public ResponseEntity<String> handleAccountClosureNotAllowedException(
+            AccountClosureNotAllowedException e) {
+
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity <Map<String,String>> handleMethodArgumentNotValidException(MethodArgumentNotValidException  e) {
         Map<String, String> errors = e.getBindingResult()

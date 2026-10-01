@@ -9,7 +9,9 @@ import {
   type Customer,
 } from "../api/customerApi";
 import { getTransactions, type Transaction } from "../api/transactionApi";
+import AccountForm from "../components/account/AccountForm";
 import CustomerForm from "../components/customer/CustomerForm";
+import TransactionForm from "../components/transaction/TransactionForm";
 
 function CustomerDetails() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +25,8 @@ function CustomerDetails() {
   const [error, setError] = useState("");
 
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showAccountForm, setShowAccountForm] = useState(false);
+  const [showTransactionForm, setShowTransactionForm] = useState(false);
 
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -84,6 +88,27 @@ function CustomerDetails() {
 
     const customerData = await getCustomerById(Number(id));
     setCustomer(customerData);
+  };
+
+  const reloadAccountsAndTransactions = async () => {
+    if (!id) {
+      return;
+    }
+
+    const customerId = Number(id);
+    const [accountsData, transactionsData] = await Promise.all([
+      getAccounts(),
+      getTransactions(),
+    ]);
+
+    setAccounts(
+      accountsData.filter((account) => account.customerId === customerId),
+    );
+    setTransactions(
+      transactionsData.filter(
+        (transaction) => transaction.customerId === customerId,
+      ),
+    );
   };
 
   const handleDelete = async () => {
@@ -211,6 +236,28 @@ function CustomerDetails() {
               className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               Change Password
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowAccountForm(true)}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              Create Account
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowTransactionForm(true)}
+              disabled={accounts.length === 0}
+              title={
+                accounts.length === 0
+                  ? "This customer has no accounts. Create an account first."
+                  : undefined
+              }
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              Create Transaction
             </button>
 
             <button
@@ -469,6 +516,29 @@ function CustomerDetails() {
               await reloadCustomer();
             }}
             onCancel={() => setShowEditForm(false)}
+          />
+        )}
+
+        {showAccountForm && (
+          <AccountForm
+            customerId={customer.customerId}
+            customerName={`${customer.firstName} ${customer.lastName}`}
+            onSuccess={async () => {
+              setShowAccountForm(false);
+              await reloadAccountsAndTransactions();
+            }}
+            onCancel={() => setShowAccountForm(false)}
+          />
+        )}
+
+        {showTransactionForm && accounts.length > 0 && (
+          <TransactionForm
+            accounts={accounts}
+            onSuccess={async () => {
+              setShowTransactionForm(false);
+              await reloadAccountsAndTransactions();
+            }}
+            onCancel={() => setShowTransactionForm(false)}
           />
         )}
 

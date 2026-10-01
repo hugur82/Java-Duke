@@ -22,6 +22,15 @@ export interface AccountPage {
   size: number;
 }
 
+export interface AccountCreateRequest {
+  customerId: number;
+  accountType: "CHECKING" | "SAVINGS";
+}
+
+export interface AccountUpdateRequest {
+  status: Account["accountStatus"];
+}
+
 export async function getAccounts(): Promise<Account[]> {
   const response = await apiClient("/api/accounts");
 
@@ -74,6 +83,37 @@ export async function getAccountById(accountId: number): Promise<Account> {
 
   if (!response.ok) {
     throw new Error("Unable to load account.");
+  }
+
+  return response.json();
+}
+
+export async function createAccount(
+  account: AccountCreateRequest,
+): Promise<Account> {
+  const response = await apiClient("/api/accounts", {
+    method: "POST",
+    body: JSON.stringify(account),
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to create account.");
+  }
+
+  return response.json();
+}
+
+export async function updateAccount(
+  accountId: number,
+  account: AccountUpdateRequest,
+): Promise<Account> {
+  const response = await apiClient(`/api/accounts/${accountId}`, {
+    method: "PATCH",
+    body: JSON.stringify(account),
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to update account status.");
   }
 
   return response.json();

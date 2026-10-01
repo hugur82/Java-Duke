@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { getAccountById, type Account } from "../api/accountApi";
+import {
+  getAccountById,
+  updateAccount,
+  type Account,
+} from "../api/accountApi";
 import { getTransactions, type Transaction } from "../api/transactionApi";
 
 type StatementRow = {
@@ -20,6 +24,12 @@ function AccountDetails() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(!invalidId);
   const [error, setError] = useState("");
+  const [showStatusForm, setShowStatusForm] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<
+    Account["accountStatus"]
+  >("ACTIVE");
+  const [statusError, setStatusError] = useState("");
+  const [statusLoading, setStatusLoading] = useState(false);
 
   useEffect(() => {
     if (invalidId) {
@@ -65,6 +75,51 @@ function AccountDetails() {
       cancelled = true;
     };
   }, [accountId, invalidId]);
+
+  const openStatusForm = () => {
+    if (!account) {
+      return;
+    }
+
+    setSelectedStatus(account.accountStatus);
+    setStatusError("");
+    setShowStatusForm(true);
+  };
+
+  const handleStatusUpdate = async () => {
+    if (!account) {
+      return;
+    }
+
+    if (selectedStatus === "CLOSED" && Number(account.balance) !== 0) {
+      setStatusError("An account can be closed only when its balance is zero.");
+      return;
+    }
+
+    if (
+      selectedStatus === "CLOSED" &&
+      !window.confirm(
+        "Close this account? Transactions can no longer be processed while it is closed.",
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setStatusLoading(true);
+      setStatusError("");
+      setAccount(
+        await updateAccount(account.accountId, { status: selectedStatus }),
+      );
+      setShowStatusForm(false);
+    } catch (err) {
+      setStatusError(
+        err instanceof Error ? err.message : "Unable to update account status.",
+      );
+    } finally {
+      setStatusLoading(false);
+    }
+  };
 
   /*
    * Calculate the balance chronologically.
@@ -187,17 +242,27 @@ function AccountDetails() {
                 </p>
               </div>
 
-              <span
-                className={
-                  account.accountStatus === "ACTIVE"
-                    ? "inline-flex w-fit rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                    : account.accountStatus === "BLOCKED"
-                      ? "inline-flex w-fit rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                      : "inline-flex w-fit rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                }
-              >
-                {account.accountStatus}
-              </span>
+              <div className="flex w-fit items-center gap-3">
+                <span
+                  className={
+                    account.accountStatus === "ACTIVE"
+                      ? "inline-flex rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                      : account.accountStatus === "BLOCKED"
+                        ? "inline-flex rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        : "inline-flex rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                  }
+                >
+                  {account.accountStatus}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={openStatusForm}
+                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  Change Status
+                </button>
+              </div>
             </div>
           </div>
 
@@ -271,6 +336,63 @@ function AccountDetails() {
             </div>
           </div>
         </section>
+
+        {showStatusForm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Change Account Status
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Only ACTIVE accounts can process transactions.
+              </p>
+
+              {statusError && (
+                <div className="mt-4 rounded-lg bg-red-100 px-4 py-3 text-sm font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                  {statusError}
+                </div>
+              )}
+
+              <div className="mt-6">
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Status
+                </label>
+                <select
+                  value={selectedStatus}
+                  onChange={(event) =>
+                    setSelectedStatus(
+                      event.target.value as Account["accountStatus"],
+                    )
+                  }
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                >
+                  <option value="ACTIVE">Active</option>
+                  <option value="BLOCKED">Blocked</option>
+                  <option value="CLOSED">Closed</option>
+                </select>
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowStatusForm(false)}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleStatusUpdate}
+                  disabled={statusLoading || selectedStatus === account.accountStatus}
+                  className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                >
+                  {statusLoading ? "Saving..." : "Save Status"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Statement */}
         <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">

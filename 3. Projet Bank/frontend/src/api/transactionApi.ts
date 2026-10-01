@@ -24,6 +24,18 @@ export interface TransactionPage {
   size: number;
 }
 
+export interface TransactionCreateRequest {
+  accountId: number;
+  transactionType: "DEPOSIT" | "WITHDRAWAL";
+  amount: number;
+  description?: string;
+}
+
+export interface TransactionUpdateRequest {
+  amount: number;
+  description?: string;
+}
+
 export async function getTransactions(): Promise<Transaction[]> {
   const response = await apiClient("/api/transactions");
 
@@ -80,6 +92,51 @@ export async function getTransactionById(
 
   if (!response.ok) {
     throw new Error("Unable to load transaction.");
+  }
+
+  return response.json();
+}
+
+export async function createTransaction(
+  transaction: TransactionCreateRequest,
+): Promise<Transaction> {
+  const response = await apiClient("/api/transactions", {
+    method: "POST",
+    body: JSON.stringify(transaction),
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to create transaction.");
+  }
+
+  return response.json();
+}
+
+export async function processTransaction(
+  transactionId: number,
+): Promise<Transaction> {
+  const response = await apiClient(`/api/transactions/${transactionId}/process`, {
+    method: "PATCH",
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to process transaction.");
+  }
+
+  return response.json();
+}
+
+export async function updateTransaction(
+  transactionId: number,
+  transaction: TransactionUpdateRequest,
+): Promise<Transaction> {
+  const response = await apiClient(`/api/transactions/${transactionId}`, {
+    method: "PATCH",
+    body: JSON.stringify(transaction),
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to update transaction.");
   }
 
   return response.json();

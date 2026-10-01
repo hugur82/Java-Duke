@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { getTransactionById, type Transaction } from "../api/transactionApi";
+import {
+  getTransactionById,
+  processTransaction,
+  updateTransaction,
+  type Transaction,
+} from "../api/transactionApi";
 
 function TransactionDetails() {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +18,11 @@ function TransactionDetails() {
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [loading, setLoading] = useState(!invalidId);
   const [error, setError] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     if (invalidId) {
@@ -42,6 +52,67 @@ function TransactionDetails() {
       cancelled = true;
     };
   }, [transactionId, invalidId]);
+
+  const handleProcess = async () => {
+    if (!transaction) {
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      setError("");
+      setTransaction(await processTransaction(transaction.transactionId));
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Unable to process transaction.",
+      );
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const openEditForm = () => {
+    if (!transaction) {
+      return;
+    }
+
+    setAmount(String(transaction.amount));
+    setDescription(transaction.description ?? "");
+    setError("");
+    setShowEditForm(true);
+  };
+
+  const handleUpdate = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!transaction) {
+      return;
+    }
+
+    const numericAmount = Number(amount);
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      setError("Amount must be greater than zero.");
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      setError("");
+      setTransaction(
+        await updateTransaction(transaction.transactionId, {
+          amount: numericAmount,
+          ...(description.trim() ? { description: description.trim() } : {}),
+        }),
+      );
+      setShowEditForm(false);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Unable to update transaction.",
+      );
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   if (invalidId) {
     return (
@@ -115,11 +186,47 @@ function TransactionDetails() {
               </p>
             </div>
 
-            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-              {transaction.transactionStatus}
-            </span>
+            <div className="flex items-center gap-3">
+              {transaction.transactionStatus === "CREATED" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={openEditForm}
+                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                  >
+                    Update Transaction
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleProcess}
+                    disabled={processing}
+                    className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                  >
+                    {processing ? "Processing..." : "Process Transaction"}
+                  </button>
+                </>
+              )}
+
+              <span
+                className={
+                  transaction.transactionStatus === "ACCEPTED"
+                    ? "rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                    : transaction.transactionStatus === "REJECTED"
+                      ? "rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                      : "rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                }
+              >
+                {transaction.transactionStatus}
+              </span>
+            </div>
           </div>
         </div>
+
+        {error && (
+          <div className="mb-6 rounded-lg bg-red-100 px-4 py-3 text-sm font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+            {error}
+          </div>
+        )}
 
         {/* Transaction information */}
         <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
@@ -206,6 +313,65 @@ function TransactionDetails() {
             </div>
           </div>
         </section>
+
+        {showEditForm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Update Transaction
+              </h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                You can edit a transaction only while its status is CREATED.
+              </p>
+
+              <form className="mt-6 space-y-4" onSubmit={handleUpdate}>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={amount}
+                    onChange={(event) => setAmount(event.target.value)}
+                    required
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Description <span className="font-normal">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditForm(false)}
+                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={updating}
+                    className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                  >
+                    {updating ? "Updating..." : "Update Transaction"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
