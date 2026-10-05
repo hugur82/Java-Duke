@@ -47,6 +47,7 @@ public class EmployeeController {
     ) {
         return employeeService.updateStatus(id, request);
     }
+
     @PutMapping("/{id}")
     public EmployeeResponseDTO update(
             @PathVariable Long id,
@@ -54,4 +55,5 @@ public class EmployeeController {
     ) {
         return employeeService.update(id, request);
     }
+
 }

@@ -1,9 +1,6 @@
 package com.supabank.bankmanagementsystem.service;
 
-import com.supabank.bankmanagementsystem.dto.EmployeeCreateRequestDTO;
-import com.supabank.bankmanagementsystem.dto.EmployeeResponseDTO;
-import com.supabank.bankmanagementsystem.dto.EmployeeStatusUpdateRequestDTO;
-import com.supabank.bankmanagementsystem.dto.EmployeeUpdateRequestDTO;
+import com.supabank.bankmanagementsystem.dto.*;
 import com.supabank.bankmanagementsystem.entity.EmployeeEntity;
 import com.supabank.bankmanagementsystem.entity.EmployeeStatus;
 import com.supabank.bankmanagementsystem.exception.EmployeeAlreadyExistsException;
@@ -122,6 +119,37 @@ public class EmployeeService {
         return toResponseDTO(employeeRepository.save(employee));
     }
 
+    public EmployeeResponseDTO updateProfile(
+            String currentUserEmail,
+            EmployeeUpdateRequestDTO request
+    ) {
+        EmployeeEntity employee = employeeRepository
+                .findByEmail(currentUserEmail)
+                .orElseThrow(() ->
+                        new EmployeeNotFoundException(
+                                "Employee not found"
+                        )
+                );
+
+        String email = request.getEmail()
+                .trim()
+                .toLowerCase();
+
+        if (!employee.getEmail().equals(email)
+                && employeeRepository.existsByEmail(email)) {
+
+            throw new EmployeeAlreadyExistsException(
+                    "An employee already exists with this email."
+            );
+        }
+
+        employee.setFirstName(request.getFirstName().trim());
+        employee.setLastName(request.getLastName().trim());
+        employee.setEmail(email);
+
+        return toResponseDTO(employeeRepository.save(employee));
+    }
+
     public String resetPassword(Long employeeId) {
         EmployeeEntity employee = findEmployee(employeeId);
 
@@ -135,5 +163,33 @@ public class EmployeeService {
         employeeRepository.save(employee);
 
         return newPassword;
+    }
+
+    public void changePassword(
+            String currentUserEmail,
+            ChangePasswordRequestDTO request
+    ) {
+        EmployeeEntity employee = employeeRepository
+                .findByEmail(currentUserEmail)
+                .orElseThrow(() ->
+                        new EmployeeNotFoundException(
+                                "Employee not found"
+                        )
+                );
+
+        if (!passwordEncoder.matches(
+                request.getCurrentPassword(),
+                employee.getPasswordHash()
+        )) {
+            throw new IllegalArgumentException(
+                    "Current password is incorrect."
+            );
+        }
+
+        employee.setPasswordHash(
+                passwordEncoder.encode(request.getNewPassword())
+        );
+
+        employeeRepository.save(employee);
     }
 }
