@@ -3,6 +3,7 @@ package com.supabank.bankmanagementsystem.service;
 import com.supabank.bankmanagementsystem.dto.EmployeeCreateRequestDTO;
 import com.supabank.bankmanagementsystem.dto.EmployeeResponseDTO;
 import com.supabank.bankmanagementsystem.dto.EmployeeStatusUpdateRequestDTO;
+import com.supabank.bankmanagementsystem.dto.EmployeeUpdateRequestDTO;
 import com.supabank.bankmanagementsystem.entity.EmployeeEntity;
 import com.supabank.bankmanagementsystem.entity.EmployeeStatus;
 import com.supabank.bankmanagementsystem.exception.EmployeeAlreadyExistsException;
@@ -10,9 +11,12 @@ import com.supabank.bankmanagementsystem.exception.EmployeeNotFoundException;
 import com.supabank.bankmanagementsystem.repository.EmployeeRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class EmployeeService {
@@ -51,9 +55,27 @@ public class EmployeeService {
         return toResponseDTO(employeeRepository.save(employee));
     }
 
-    public EmployeeResponseDTO updateStatus(Long employeeId, EmployeeStatusUpdateRequestDTO request) {
+    public EmployeeResponseDTO updateStatus(
+            Long employeeId,
+            EmployeeStatusUpdateRequestDTO request
+    ) {
         EmployeeEntity employee = findEmployee(employeeId);
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        String currentUserEmail = authentication.getName();
+
+        if (employee.getEmail().equalsIgnoreCase(currentUserEmail)
+                && request.getStatus() == EmployeeStatus.DISABLED) {
+
+            throw new IllegalArgumentException(
+                    "You cannot disable your own account."
+            );
+        }
+
         employee.setStatus(request.getStatus());
+
         return toResponseDTO(employeeRepository.save(employee));
     }
 
@@ -75,5 +97,43 @@ public class EmployeeService {
                 employee.getCreatedAt(),
                 employee.getLastLoginAt()
         );
+    }
+
+    public EmployeeResponseDTO update(
+            Long employeeId,
+            EmployeeUpdateRequestDTO request
+    ) {
+        EmployeeEntity employee = findEmployee(employeeId);
+
+        String email = request.getEmail().trim().toLowerCase();
+
+        if (!employee.getEmail().equals(email)
+                && employeeRepository.existsByEmail(email)) {
+            throw new EmployeeAlreadyExistsException(
+                    "An employee already exists with this email."
+            );
+        }
+
+        employee.setFirstName(request.getFirstName().trim());
+        employee.setLastName(request.getLastName().trim());
+        employee.setEmail(email);
+        employee.setRole(request.getRole());
+
+        return toResponseDTO(employeeRepository.save(employee));
+    }
+
+    public String resetPassword(Long employeeId) {
+        EmployeeEntity employee = findEmployee(employeeId);
+
+        String newPassword = UUID.randomUUID()
+                .toString()
+                .replace("-", "")
+                .substring(0, 12);
+
+        employee.setPasswordHash(passwordEncoder.encode(newPassword));
+
+        employeeRepository.save(employee);
+
+        return newPassword;
     }
 }

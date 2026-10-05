@@ -3,6 +3,7 @@ package com.supabank.bankmanagementsystem.controller;
 import com.supabank.bankmanagementsystem.dto.EmployeeCreateRequestDTO;
 import com.supabank.bankmanagementsystem.dto.EmployeeResponseDTO;
 import com.supabank.bankmanagementsystem.dto.EmployeeStatusUpdateRequestDTO;
+import com.supabank.bankmanagementsystem.dto.EmployeeUpdateRequestDTO;
 import com.supabank.bankmanagementsystem.service.EmployeeService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -34,11 +35,23 @@ public class EmployeeController {
         return employeeService.create(request);
     }
 
+    @PostMapping("/{id}/reset-password")
+    public String resetPassword(@PathVariable Long id) {
+        return employeeService.resetPassword(id);
+    }
+
     @PatchMapping("/{id}/status")
     public EmployeeResponseDTO updateStatus(
             @PathVariable Long id,
             @RequestBody @Valid EmployeeStatusUpdateRequestDTO request
     ) {
         return employeeService.updateStatus(id, request);
+    }
+    @PutMapping("/{id}")
+    public EmployeeResponseDTO update(
+            @PathVariable Long id,
+            @RequestBody @Valid EmployeeUpdateRequestDTO request
+    ) {
+        return employeeService.update(id, request);
     }
 }

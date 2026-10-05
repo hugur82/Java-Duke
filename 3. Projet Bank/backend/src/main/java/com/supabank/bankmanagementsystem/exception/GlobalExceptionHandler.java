@@ -33,6 +33,16 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(
+            IllegalArgumentException e
+    ) {
+        return new ResponseEntity<>(
+                e.getMessage(),
+                HttpStatus.CONFLICT
+        );
+    }
+
     @ExceptionHandler(TransactionNotFoundException.class)
     public ResponseEntity<String> handleTransactionNotFoundException(TransactionNotFoundException  e) {
         return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);

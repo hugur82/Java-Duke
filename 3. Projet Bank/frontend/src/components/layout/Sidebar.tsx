@@ -1,6 +1,9 @@
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 function Sidebar() {
+  const { employee } = useAuth();
+
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
       isActive
@@ -41,6 +44,14 @@ function Sidebar() {
               Transactions
             </NavLink>
           </li>
+
+          {employee?.role === "ADMIN" && (
+            <li>
+              <NavLink to="/employees" className={navLinkClass}>
+                Employees
+              </NavLink>
+            </li>
+          )}
 
           <li>
             <NavLink to="/profile" className={navLinkClass}>
