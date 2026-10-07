@@ -20,6 +20,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
+  updateEmployee: (employee: CurrentEmployee) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,6 +31,9 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [employee, setEmployee] = useState<CurrentEmployee | null>(null);
+  const updateEmployee = (updatedEmployee: CurrentEmployee) => {
+    setEmployee(updatedEmployee);
+  };
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -88,6 +92,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isLoading,
         login,
         logout,
+        updateEmployee,
       }}
     >
       {children}

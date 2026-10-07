@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { getStoredCredentials, setStoredCredentials } from "../api/apiClient";
 import { changePassword, updateProfile } from "../api/profileApi";
 import { useAuth } from "../context/AuthContext";
 
 function Profile() {
-  const { employee } = useAuth();
+  const { employee, updateEmployee } = useAuth();
 
   const [firstName, setFirstName] = useState(employee?.firstName ?? "");
   const [lastName, setLastName] = useState(employee?.lastName ?? "");
@@ -38,6 +39,14 @@ function Profile() {
         role: employee.role,
       });
 
+      const credentials = getStoredCredentials();
+
+      if (credentials) {
+        setStoredCredentials(updatedEmployee.email, credentials.password);
+      }
+
+      updateEmployee(updatedEmployee);
+
       setFirstName(updatedEmployee.firstName);
       setLastName(updatedEmployee.lastName);
       setEmail(updatedEmployee.email);
@@ -68,6 +77,12 @@ function Profile() {
 
       await changePassword(currentPassword, newPassword);
 
+      const credentials = getStoredCredentials();
+
+      if (credentials) {
+        setStoredCredentials(credentials.username, newPassword);
+      }
+
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -83,6 +98,7 @@ function Profile() {
       setChangingPassword(false);
     }
   };
+
   return (
     <main className="flex-1 overflow-y-auto bg-gray-50 p-8 dark:bg-gray-950">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
