@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+
 import {
   getEmployeeById,
   resetEmployeePassword,
@@ -152,24 +153,24 @@ function EmployeeDetails() {
 
   if (loading) {
     return (
-      <main className="flex-1 overflow-auto p-6">
-        <p>Loading...</p>
+      <main className="flex-1 overflow-auto bg-gray-50 p-6 dark:bg-gray-950">
+        <p className="text-gray-900 dark:text-white">Loading...</p>
       </main>
     );
   }
 
   if (error && !employee) {
     return (
-      <main className="flex-1 overflow-auto p-6">
+      <main className="flex-1 overflow-auto bg-gray-50 p-6 dark:bg-gray-950">
         <button
           type="button"
           onClick={() => navigate("/employees")}
-          className="mb-6 rounded-lg border px-4 py-2"
+          className="mb-6 rounded-lg border border-gray-300 px-4 py-2 text-gray-900 hover:bg-gray-100 dark:border-gray-700 dark:text-white dark:hover:bg-gray-800"
         >
           ← Back to Employees
         </button>
 
-        <p className="text-red-600">{error}</p>
+        <p className="text-red-600 dark:text-red-400">{error}</p>
       </main>
     );
   }
@@ -179,12 +180,12 @@ function EmployeeDetails() {
   }
 
   return (
-    <main className="flex-1 overflow-auto p-6">
+    <main className="flex-1 overflow-auto bg-gray-50 p-6 dark:bg-gray-950">
       <div className="mb-6 flex items-center justify-between">
         <button
           type="button"
           onClick={() => navigate("/employees")}
-          className="rounded-lg border px-4 py-2 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
+          className="rounded-lg border border-gray-300 px-4 py-2 text-gray-900 hover:bg-gray-100 dark:border-gray-700 dark:text-white dark:hover:bg-gray-800"
         >
           ← Back to Employees
         </button>
@@ -193,7 +194,7 @@ function EmployeeDetails() {
           <button
             type="button"
             onClick={handleEdit}
-            className="rounded-lg bg-black px-4 py-2 text-white hover:opacity-90"
+            className="rounded-lg bg-black px-4 py-2 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
           >
             Edit
           </button>
@@ -201,65 +202,68 @@ function EmployeeDetails() {
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg border border-red-300 bg-red-50 p-4 text-red-700">
+        <div className="mb-6 rounded-lg border border-red-300 bg-red-50 p-4 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
           {error}
         </div>
       )}
 
       <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-        <h1 className="mb-6 text-2xl font-bold dark:text-white">
+        <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
           Employee Details
         </h1>
 
         {editing ? (
           <div className="space-y-5">
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-gray-300">
                 First name
               </label>
 
               <input
                 value={firstName}
                 onChange={(event) => setFirstName(event.target.value)}
-                className="w-full rounded-lg border px-4 py-2 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-gray-300">
                 Last name
               </label>
 
               <input
                 value={lastName}
                 onChange={(event) => setLastName(event.target.value)}
-                className="w-full rounded-lg border px-4 py-2 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium">Email</label>
+              <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-gray-300">
+                Email
+              </label>
 
               <input
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                className="w-full rounded-lg border px-4 py-2 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium">Role</label>
+              <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-gray-300">
+                Role
+              </label>
 
               <select
                 value={role}
                 onChange={(event) =>
                   setRole(event.target.value as EmployeeRole)
                 }
-                className="w-full rounded-lg border px-4 py-2 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               >
                 <option value="EMPLOYEE">EMPLOYEE</option>
-
                 <option value="ADMIN">ADMIN</option>
               </select>
             </div>
@@ -269,7 +273,7 @@ function EmployeeDetails() {
                 type="button"
                 onClick={handleSave}
                 disabled={saving}
-                className="rounded-lg bg-black px-4 py-2 text-white disabled:opacity-50"
+                className="rounded-lg bg-black px-4 py-2 text-white hover:bg-gray-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
               >
                 {saving ? "Saving..." : "Save"}
               </button>
@@ -277,7 +281,7 @@ function EmployeeDetails() {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="rounded-lg border px-4 py-2 dark:border-gray-700"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-gray-900 hover:bg-gray-100 dark:border-gray-700 dark:text-white dark:hover:bg-gray-800"
               >
                 Cancel
               </button>
@@ -286,40 +290,65 @@ function EmployeeDetails() {
         ) : (
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-gray-500">First name</p>
-              <p className="text-lg dark:text-white">{employee.firstName}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                First name
+              </p>
+
+              <p className="text-lg text-gray-900 dark:text-white">
+                {employee.firstName}
+              </p>
             </div>
 
             <div>
-              <p className="text-sm text-gray-500">Last name</p>
-              <p className="text-lg dark:text-white">{employee.lastName}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Last name
+              </p>
+
+              <p className="text-lg text-gray-900 dark:text-white">
+                {employee.lastName}
+              </p>
             </div>
 
             <div>
-              <p className="text-sm text-gray-500">Email</p>
-              <p className="text-lg dark:text-white">{employee.email}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
+
+              <p className="text-lg text-gray-900 dark:text-white">
+                {employee.email}
+              </p>
             </div>
 
             <div>
-              <p className="text-sm text-gray-500">Role</p>
-              <p className="text-lg dark:text-white">{employee.role}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Role</p>
+
+              <p className="text-lg text-gray-900 dark:text-white">
+                {employee.role}
+              </p>
             </div>
 
             <div>
-              <p className="text-sm text-gray-500">Status</p>
-              <p className="text-lg dark:text-white">{employee.status}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
+
+              <p className="text-lg text-gray-900 dark:text-white">
+                {employee.status}
+              </p>
             </div>
 
             <div>
-              <p className="text-sm text-gray-500">Created at</p>
-              <p className="text-lg dark:text-white">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Created at
+              </p>
+
+              <p className="text-lg text-gray-900 dark:text-white">
                 {new Date(employee.createdAt).toLocaleString()}
               </p>
             </div>
 
             <div>
-              <p className="text-sm text-gray-500">Last login</p>
-              <p className="text-lg dark:text-white">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Last login
+              </p>
+
+              <p className="text-lg text-gray-900 dark:text-white">
                 {employee.lastLoginAt
                   ? new Date(employee.lastLoginAt).toLocaleString()
                   : "Never"}
@@ -327,14 +356,16 @@ function EmployeeDetails() {
             </div>
 
             <div className="pt-4">
-              <p className="mb-2 text-sm font-medium">Status</p>
+              <p className="mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                Status
+              </p>
 
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => handleStatusChange("ACTIVE")}
                   disabled={employee.status === "ACTIVE"}
-                  className="rounded-lg border px-4 py-2 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-white dark:hover:bg-gray-800"
                 >
                   Activate
                 </button>
@@ -343,7 +374,7 @@ function EmployeeDetails() {
                   type="button"
                   onClick={() => handleStatusChange("DISABLED")}
                   disabled={employee.status === "DISABLED"}
-                  className="rounded-lg border px-4 py-2 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-white dark:hover:bg-gray-800"
                 >
                   Disable
                 </button>
@@ -351,16 +382,19 @@ function EmployeeDetails() {
             </div>
 
             <div className="pt-4">
-              <p className="mb-2 text-sm font-medium">Password</p>
+              <p className="mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                Password
+              </p>
 
               <button
                 type="button"
                 onClick={handleResetPassword}
                 disabled={isResettingPassword}
-                className="rounded-lg border px-4 py-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-white dark:hover:bg-gray-800"
               >
                 {isResettingPassword ? "Resetting..." : "Reset Password"}
               </button>
+
               {resetPassword && (
                 <div className="mt-4 rounded-lg border border-yellow-300 bg-yellow-50 p-4 dark:border-yellow-700 dark:bg-yellow-950">
                   <p className="mb-2 text-sm font-medium text-yellow-800 dark:text-yellow-300">
@@ -368,7 +402,7 @@ function EmployeeDetails() {
                   </p>
 
                   <div className="flex items-center gap-3">
-                    <code className="rounded bg-white px-3 py-2 font-mono text-sm dark:bg-gray-900 dark:text-white">
+                    <code className="rounded bg-white px-3 py-2 font-mono text-sm text-gray-900 dark:bg-gray-900 dark:text-white">
                       {resetPassword}
                     </code>
 
@@ -377,7 +411,7 @@ function EmployeeDetails() {
                       onClick={() =>
                         navigator.clipboard.writeText(resetPassword)
                       }
-                      className="rounded-lg border px-3 py-2 text-sm hover:bg-white dark:border-gray-700 dark:hover:bg-gray-900"
+                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 hover:bg-white dark:border-gray-700 dark:text-white dark:hover:bg-gray-900"
                     >
                       Copy
                     </button>
