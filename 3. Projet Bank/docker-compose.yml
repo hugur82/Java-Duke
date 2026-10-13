@@ -8,9 +8,6 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: BankManagementSystem
 
-    ports:
-      - "3307:3306"
-
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database/BankManagementSystem_Docker.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
@@ -33,9 +30,6 @@ services:
     container_name: supabank-backend
     restart: unless-stopped
 
-    ports:
-      - "8080:8080"
-
     environment:
       DB_URL: jdbc:mysql://mysql:3306/BankManagementSystem
       DB_USERNAME: root
@@ -54,10 +48,23 @@ services:
     restart: unless-stopped
 
     ports:
-      - "5173:80"
+      - "127.0.0.1:5173:80"
 
     depends_on:
       - backend
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: supabank-cloudflared
+    restart: unless-stopped
+
+    command: tunnel --no-autoupdate run
+
+    environment:
+      TUNNEL_TOKEN: ${CF_TUNNEL_TOKEN}
+
+    depends_on:
+      - frontend
 
 volumes:
   mysql_data:

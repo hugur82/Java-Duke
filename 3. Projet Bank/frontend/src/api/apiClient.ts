@@ -1,6 +1,4 @@
-//const API_URL = "http://192.168.1.101:8080";
-
-const API_URL = "http://localhost:8080";
+//const API_URL = "http://localhost:8080";
 
 const AUTH_STORAGE_KEY = "supa_bank_auth";
 
@@ -50,7 +48,7 @@ export async function apiClient(
 
   headers.set("Content-Type", "application/json");
 
-  return fetch(`${API_URL}${endpoint}`, {
+  return fetch(endpoint, {
     ...options,
     headers,
   });
