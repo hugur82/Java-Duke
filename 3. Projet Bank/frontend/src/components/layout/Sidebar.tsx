@@ -12,7 +12,7 @@ function Sidebar() {
     }`;
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+    <aside className="flex h-screen w-48 flex-col border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="flex h-16 items-center border-b border-gray-200 px-6 dark:border-gray-800">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">
           SupaBank

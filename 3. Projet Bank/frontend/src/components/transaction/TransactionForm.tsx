@@ -5,12 +5,18 @@ import { createTransaction } from "../../api/transactionApi";
 
 interface TransactionFormProps {
   accounts: Account[];
-  onSuccess: () => void;
+  onSuccess: () => void | Promise<void>;
   onCancel: () => void;
 }
 
-function TransactionForm({ accounts, onSuccess, onCancel }: TransactionFormProps) {
-  const [accountId, setAccountId] = useState(String(accounts[0]?.accountId ?? ""));
+function TransactionForm({
+  accounts,
+  onSuccess,
+  onCancel,
+}: TransactionFormProps) {
+  const [accountId, setAccountId] = useState(
+    String(accounts[0]?.accountId ?? ""),
+  );
   const [transactionType, setTransactionType] = useState<
     "DEPOSIT" | "WITHDRAWAL"
   >("DEPOSIT");
@@ -24,20 +30,28 @@ function TransactionForm({ accounts, onSuccess, onCancel }: TransactionFormProps
     setError("");
 
     const numericAmount = Number(amount);
+
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
       setError("Amount must be greater than zero.");
       return;
     }
 
+    if (!accountId) {
+      setError("Please select an account.");
+      return;
+    }
+
     try {
       setSubmitting(true);
+
       await createTransaction({
         accountId: Number(accountId),
         transactionType,
         amount: numericAmount,
         ...(description.trim() ? { description: description.trim() } : {}),
       });
-      onSuccess();
+
+      await onSuccess();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Unable to create transaction.",
@@ -53,6 +67,7 @@ function TransactionForm({ accounts, onSuccess, onCancel }: TransactionFormProps
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">
           Create Transaction
         </h2>
+
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Select one of this customer&apos;s accounts.
         </p>
@@ -68,10 +83,13 @@ function TransactionForm({ accounts, onSuccess, onCancel }: TransactionFormProps
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Account
             </label>
+
             <select
               value={accountId}
               onChange={(event) => setAccountId(event.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              required
+              disabled={submitting}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-gray-500 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             >
               {accounts.map((account) => (
                 <option key={account.accountId} value={account.accountId}>
@@ -85,12 +103,16 @@ function TransactionForm({ accounts, onSuccess, onCancel }: TransactionFormProps
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Transaction type
             </label>
+
             <select
               value={transactionType}
               onChange={(event) =>
-                setTransactionType(event.target.value as "DEPOSIT" | "WITHDRAWAL")
+                setTransactionType(
+                  event.target.value as "DEPOSIT" | "WITHDRAWAL",
+                )
               }
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              disabled={submitting}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-gray-500 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             >
               <option value="DEPOSIT">Deposit</option>
               <option value="WITHDRAWAL">Withdrawal</option>
@@ -101,6 +123,7 @@ function TransactionForm({ accounts, onSuccess, onCancel }: TransactionFormProps
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Amount
             </label>
+
             <input
               type="number"
               min="0.01"
@@ -108,7 +131,8 @@ function TransactionForm({ accounts, onSuccess, onCancel }: TransactionFormProps
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
               required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              disabled={submitting}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             />
           </div>
 
@@ -116,11 +140,13 @@ function TransactionForm({ accounts, onSuccess, onCancel }: TransactionFormProps
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Description <span className="font-normal">(optional)</span>
             </label>
+
             <input
               type="text"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              disabled={submitting}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-500 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             />
           </div>
 
@@ -128,13 +154,15 @@ function TransactionForm({ accounts, onSuccess, onCancel }: TransactionFormProps
             <button
               type="button"
               onClick={onCancel}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              disabled={submitting}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               Cancel
             </button>
+
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || accounts.length === 0}
               className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
             >
               {submitting ? "Creating..." : "Create Transaction"}

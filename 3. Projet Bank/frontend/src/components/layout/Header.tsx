@@ -1,7 +1,10 @@
+import { Menu } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../context/AuthContext";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "../ui/sheet";
+import Sidebar from "./Sidebar";
 import ThemeToggle from "./ThemeToggle";
 
 function Header() {
@@ -9,6 +12,7 @@ function Header() {
   const navigate = useNavigate();
 
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const initials = employee
     ? `${employee.firstName.charAt(0)}${employee.lastName.charAt(0)}`.toUpperCase()
@@ -26,36 +30,59 @@ function Header() {
   };
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6 dark:border-gray-800 dark:bg-gray-900">
-      {/* Page title */}
-      <div>
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Dashboard
+    <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 sm:sticky sm:top-0 sm:z-40 sm:w-full sm:shrink-0 dark:border-gray-800 dark:bg-gray-900">
+      <div className="flex min-w-0 items-center gap-3">
+        {isAuthenticated && (
+          <div className="xl:hidden">
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger
+                className="inline-flex size-10 items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
+                aria-label="Open navigation menu"
+              >
+                <Menu className="size-5" />
+              </SheetTrigger>
+
+              <SheetContent
+                side="left"
+                className="w-72 p-0"
+                onClick={(event) => {
+                  if ((event.target as HTMLElement).closest("a")) {
+                    setIsMobileMenuOpen(false);
+                  }
+                }}
+              >
+                <SheetTitle className="sr-only">SupaBank navigation</SheetTitle>
+                <Sidebar />
+              </SheetContent>
+            </Sheet>
+          </div>
+        )}
+
+        <h1 className="truncate text-lg font-semibold text-gray-900 dark:text-white">
+          SupaBank
         </h1>
       </div>
-
-      {/* User section */}
-      <div className="flex items-center gap-4">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-4">
         <ThemeToggle />
 
         {isAuthenticated && employee ? (
           <>
-            <div className="text-right">
+            <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 {employee.firstName} {employee.lastName}
               </p>
-
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {employee.role}
               </p>
             </div>
 
-            {/* User menu */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setShowUserMenu((current) => !current)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                aria-label="Open user menu"
+                aria-expanded={showUserMenu}
+                className="flex size-10 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
               >
                 {initials}
               </button>
@@ -89,13 +116,9 @@ function Header() {
             onClick={() => navigate("/login")}
             className="text-right"
           >
-            <p className="text-sm font-semibold text-gray-900 hover:underline dark:text-white">
+            <span className="text-sm font-semibold text-gray-900 hover:underline dark:text-white">
               Sign in
-            </p>
-
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Employee account
-            </p>
+            </span>
           </button>
         )}
       </div>

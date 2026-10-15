@@ -21,13 +21,18 @@ function ProtectedLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-950">
-      <Sidebar />
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
+      {/* Permanent sidebar: desktop only */}
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen shrink-0 xl:flex">
+        <Sidebar />
+      </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      {/* Main content */}
+      <div className="flex min-w-0 flex-1 flex-col xl:ml-48">
         <Header />
-
-        <Outlet />
+        <main className="min-w-0 flex-1 overflow-x-auto p-4 pt-20 sm:p-6">
+          <Outlet />
+        </main>
       </div>
     </div>
   );

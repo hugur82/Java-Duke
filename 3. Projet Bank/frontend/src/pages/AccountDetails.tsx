@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import {
-  getAccountById,
-  updateAccount,
-  type Account,
-} from "../api/accountApi";
+import { getAccountById, updateAccount, type Account } from "../api/accountApi";
 import { getTransactions, type Transaction } from "../api/transactionApi";
 
 type StatementRow = {
@@ -25,9 +21,8 @@ function AccountDetails() {
   const [loading, setLoading] = useState(!invalidId);
   const [error, setError] = useState("");
   const [showStatusForm, setShowStatusForm] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<
-    Account["accountStatus"]
-  >("ACTIVE");
+  const [selectedStatus, setSelectedStatus] =
+    useState<Account["accountStatus"]>("ACTIVE");
   const [statusError, setStatusError] = useState("");
   const [statusLoading, setStatusLoading] = useState(false);
 
@@ -207,9 +202,8 @@ function AccountDetails() {
   const currentBalance = Number(account.balance);
 
   return (
-    <main className="flex-1 overflow-y-auto bg-gray-50 p-8 dark:bg-gray-950">
+    <main className="min-w-0 flex-1 bg-gray-50 p-4 dark:bg-gray-950 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
-        {/* Back */}
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -220,29 +214,26 @@ function AccountDetails() {
 
         {/* Account header */}
         <section className="mb-8 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="border-b border-gray-200 p-6 dark:border-gray-800">
+          <div className="border-b border-gray-200 p-4 dark:border-gray-800 sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
+              <div className="min-w-0">
                 <p className="mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">
                   Account statement
                 </p>
-
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                   {account.accountType === "CHECKING"
                     ? "Checking Account"
                     : "Savings Account"}
                 </h1>
-
-                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-2 break-all text-sm text-gray-500 dark:text-gray-400">
                   Account number: {account.accountNumber}
                 </p>
-
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-1 break-all text-sm text-gray-500 dark:text-gray-400">
                   IBAN: {account.iban}
                 </p>
               </div>
 
-              <div className="flex w-fit items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <span
                   className={
                     account.accountStatus === "ACTIVE"
@@ -258,7 +249,7 @@ function AccountDetails() {
                 <button
                   type="button"
                   onClick={openStatusForm}
-                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                 >
                   Change Status
                 </button>
@@ -267,16 +258,15 @@ function AccountDetails() {
           </div>
 
           {/* Account information */}
-          <div className="grid gap-6 p-6 md:grid-cols-2">
+          <div className="grid gap-5 p-4 sm:grid-cols-2 sm:p-6">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Account holder
               </p>
-
               <button
                 type="button"
                 onClick={() => navigate(`/customers/${account.customerId}`)}
-                className="mt-1 font-semibold text-gray-900 hover:underline dark:text-white"
+                className="mt-1 break-words text-left font-semibold text-gray-900 hover:underline dark:text-white"
               >
                 {account.customerFirstName} {account.customerLastName}
               </button>
@@ -286,7 +276,6 @@ function AccountDetails() {
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Opening date
               </p>
-
               <p className="mt-1 font-semibold text-gray-900 dark:text-white">
                 {new Date(account.creationDate).toLocaleDateString()}
               </p>
@@ -294,56 +283,52 @@ function AccountDetails() {
           </div>
 
           {/* Summary */}
-          <div className="grid gap-px border-t border-gray-200 bg-gray-200 dark:border-gray-800 dark:bg-gray-800 md:grid-cols-4">
-            <div className="bg-white p-6 dark:bg-gray-900">
+          <div className="grid grid-cols-1 gap-px border-t border-gray-200 bg-gray-200 dark:border-gray-800 dark:bg-gray-800 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="bg-white p-4 dark:bg-gray-900 sm:p-6">
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Opening balance
               </p>
-
-              <p className="mt-2 text-xl font-semibold text-gray-900 dark:text-white">
+              <p className="mt-2 text-lg font-semibold text-gray-900 dark:text-white">
                 CHF {Number(account.openingBalance).toFixed(2)}
               </p>
             </div>
 
-            <div className="bg-white p-6 dark:bg-gray-900">
+            <div className="bg-white p-4 dark:bg-gray-900 sm:p-6">
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Total debits
               </p>
-
-              <p className="mt-2 text-xl font-semibold text-red-600 dark:text-red-400">
+              <p className="mt-2 text-lg font-semibold text-red-600 dark:text-red-400">
                 CHF {totalDebits.toFixed(2)}
               </p>
             </div>
 
-            <div className="bg-white p-6 dark:bg-gray-900">
+            <div className="bg-white p-4 dark:bg-gray-900 sm:p-6">
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Total credits
               </p>
-
-              <p className="mt-2 text-xl font-semibold text-green-600 dark:text-green-400">
+              <p className="mt-2 text-lg font-semibold text-green-600 dark:text-green-400">
                 CHF {totalCredits.toFixed(2)}
               </p>
             </div>
 
-            <div className="bg-white p-6 dark:bg-gray-900">
+            <div className="bg-white p-4 dark:bg-gray-900 sm:p-6">
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Current balance
               </p>
-
-              <p className="mt-2 text-xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-2 text-lg font-bold text-gray-900 dark:text-white">
                 CHF {currentBalance.toFixed(2)}
               </p>
             </div>
           </div>
         </section>
 
+        {/* Change status form */}
         {showStatusForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 Change Account Status
               </h2>
-
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Only ACTIVE accounts can process transactions.
               </p>
@@ -373,7 +358,7 @@ function AccountDetails() {
                 </select>
               </div>
 
-              <div className="mt-6 flex justify-end gap-3">
+              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={() => setShowStatusForm(false)}
@@ -384,7 +369,9 @@ function AccountDetails() {
                 <button
                   type="button"
                   onClick={handleStatusUpdate}
-                  disabled={statusLoading || selectedStatus === account.accountStatus}
+                  disabled={
+                    statusLoading || selectedStatus === account.accountStatus
+                  }
                   className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
                 >
                   {statusLoading ? "Saving..." : "Save Status"}
@@ -394,37 +381,119 @@ function AccountDetails() {
           </div>
         )}
 
-        {/* Statement */}
+        {/* Account movements */}
         <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="border-b border-gray-200 p-6 dark:border-gray-800">
+          <div className="border-b border-gray-200 p-4 dark:border-gray-800 sm:p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Account movements
             </h2>
-
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {transactions.length} movement
               {transactions.length !== 1 ? "s" : ""}
             </p>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile: compact rows */}
+          <div className="divide-y divide-gray-200 dark:divide-gray-800 md:hidden">
+            {[...statementRows].reverse().map(({ transaction, balance }) => {
+              const isDeposit = transaction.transactionType === "DEPOSIT";
+
+              return (
+                <button
+                  key={transaction.transactionId}
+                  type="button"
+                  onClick={() =>
+                    navigate(`/transactions/${transaction.transactionId}`)
+                  }
+                  className="block w-full p-4 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                >
+                  {/* Première ligne : date et solde */}
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="shrink-0 text-sm text-gray-500 dark:text-gray-400">
+                      {new Date(
+                        transaction.transactionDate,
+                      ).toLocaleDateString()}
+                    </span>
+
+                    <span className="shrink-0 text-sm font-semibold text-gray-900 dark:text-white">
+                      CHF {balance.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Deuxième ligne : libellé et montant du mouvement */}
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="break-words text-sm font-medium text-gray-900 dark:text-white">
+                        {transaction.description ||
+                          (isDeposit ? "Deposit" : "Withdrawal")}
+                      </p>
+
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Transaction #{transaction.transactionId}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`shrink-0 text-right text-sm font-semibold sm:text-base ${
+                        isDeposit
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-red-600 dark:text-red-400"
+                      }`}
+                    >
+                      {isDeposit ? "+" : "−"} CHF{" "}
+                      {Number(transaction.amount).toFixed(2)}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+
+            <div className="bg-gray-50 p-4 dark:bg-gray-800/30">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    Account opening
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {new Date(account.creationDate).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                    + CHF {Number(account.openingBalance).toFixed(2)}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Opening balance
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t-2 border-gray-300 p-4 dark:border-gray-700">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Final balance
+                </span>
+                <span className="text-lg font-bold text-gray-900 dark:text-white">
+                  CHF {currentBalance.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop: original table */}
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left">
               <thead className="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
                 <tr>
                   <th className="px-6 py-4 font-medium">Date</th>
-
                   <th className="px-6 py-4 font-medium">Description</th>
-
                   <th className="px-6 py-4 text-right font-medium">Debit</th>
-
                   <th className="px-6 py-4 text-right font-medium">Credit</th>
-
                   <th className="px-6 py-4 text-right font-medium">Balance</th>
                 </tr>
               </thead>
-
               <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                {/* Transactions : plus récente → plus ancienne */}
                 {[...statementRows]
                   .reverse()
                   .map(({ transaction, balance }) => {
@@ -443,18 +512,15 @@ function AccountDetails() {
                             transaction.transactionDate,
                           ).toLocaleDateString()}
                         </td>
-
                         <td className="px-6 py-4">
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
                             {transaction.description ||
                               (isDeposit ? "Deposit" : "Withdrawal")}
                           </p>
-
                           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             Transaction #{transaction.transactionId}
                           </p>
                         </td>
-
                         <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                           {!isDeposit && (
                             <span className="text-red-600 dark:text-red-400">
@@ -462,7 +528,6 @@ function AccountDetails() {
                             </span>
                           )}
                         </td>
-
                         <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                           {isDeposit && (
                             <span className="text-green-600 dark:text-green-400">
@@ -470,7 +535,6 @@ function AccountDetails() {
                             </span>
                           )}
                         </td>
-
                         <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
                           CHF {balance.toFixed(2)}
                         </td>
@@ -478,34 +542,27 @@ function AccountDetails() {
                     );
                   })}
 
-                {/* Account opening : toujours la ligne la plus ancienne */}
                 <tr className="bg-gray-50 dark:bg-gray-800/30">
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
                     {new Date(account.creationDate).toLocaleDateString()}
                   </td>
-
                   <td className="px-6 py-4">
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
                       Account opening
                     </p>
-
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       Initial account balance
                     </p>
                   </td>
-
                   <td className="px-6 py-4" />
-
                   <td className="px-6 py-4 text-right text-sm font-medium text-green-600 dark:text-green-400">
                     CHF {Number(account.openingBalance).toFixed(2)}
                   </td>
-
                   <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
                     CHF {Number(account.openingBalance).toFixed(2)}
                   </td>
                 </tr>
               </tbody>
-
               <tfoot className="border-t-2 border-gray-300 dark:border-gray-700">
                 <tr>
                   <td
@@ -514,7 +571,6 @@ function AccountDetails() {
                   >
                     Final balance
                   </td>
-
                   <td className="px-6 py-5 text-right text-lg font-bold text-gray-900 dark:text-white">
                     CHF {currentBalance.toFixed(2)}
                   </td>

@@ -96,6 +96,7 @@ function CustomerDetails() {
     }
 
     const customerId = Number(id);
+
     const [accountsData, transactionsData] = await Promise.all([
       getAccounts(),
       getTransactions(),
@@ -104,6 +105,7 @@ function CustomerDetails() {
     setAccounts(
       accountsData.filter((account) => account.customerId === customerId),
     );
+
     setTransactions(
       transactionsData.filter(
         (transaction) => transaction.customerId === customerId,
@@ -204,24 +206,47 @@ function CustomerDetails() {
     );
   }
 
+  // Shared transaction ordering and date formatting for mobile and desktop.
+  const sortedTransactions = [...transactions].sort(
+    (a, b) =>
+      new Date(b.transactionDate).getTime() -
+      new Date(a.transactionDate).getTime(),
+  );
+
+  const formatTransactionDate = (date: string) =>
+    date.replace("T", " ").slice(0, 16);
+
+  const getTransactionStatusClasses = (
+    status: Transaction["transactionStatus"],
+  ) =>
+    ({
+      CREATED:
+        "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+      PROCESSING:
+        "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+      ACCEPTED:
+        "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+      REJECTED: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+    })[status];
+
   return (
     <main className="flex-1 overflow-y-auto bg-gray-50 p-8 dark:bg-gray-950">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col gap-4">
           <button
             type="button"
             onClick={() => navigate("/customers")}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="self-start rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
           >
-            Back to Customers
+            ← Back to Customers
           </button>
 
-          <div className="flex gap-3">
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-5 lg:gap-3">
             <button
               type="button"
               onClick={() => setShowEditForm(true)}
-              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+              className="rounded-lg bg-gray-900 px-3 py-3 text-sm font-medium text-white hover:bg-gray-700 sm:px-4 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
             >
               Edit
             </button>
@@ -233,7 +258,7 @@ function CustomerDetails() {
                 setPasswordError("");
                 setPasswordSuccess("");
               }}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="rounded-lg border border-gray-300 px-3 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 sm:px-4 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               Change Password
             </button>
@@ -241,7 +266,7 @@ function CustomerDetails() {
             <button
               type="button"
               onClick={() => setShowAccountForm(true)}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="rounded-lg border border-gray-300 px-3 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 sm:px-4 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               Create Account
             </button>
@@ -255,7 +280,7 @@ function CustomerDetails() {
                   ? "This customer has no accounts. Create an account first."
                   : undefined
               }
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="rounded-lg border border-gray-300 px-3 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               Create Transaction
             </button>
@@ -263,9 +288,9 @@ function CustomerDetails() {
             <button
               type="button"
               onClick={handleDelete}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+              className="col-span-2 rounded-lg bg-red-600 px-3 py-3 text-sm font-medium text-white hover:bg-red-700 sm:px-4 lg:col-span-1"
             >
-              Delete
+              Delete Customer
             </button>
           </div>
         </div>
@@ -281,7 +306,6 @@ function CustomerDetails() {
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 First name
               </p>
-
               <p className="font-medium text-gray-900 dark:text-white">
                 {customer.firstName}
               </p>
@@ -291,7 +315,6 @@ function CustomerDetails() {
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Last name
               </p>
-
               <p className="font-medium text-gray-900 dark:text-white">
                 {customer.lastName}
               </p>
@@ -299,7 +322,6 @@ function CustomerDetails() {
 
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
-
               <p className="font-medium text-gray-900 dark:text-white">
                 {customer.email}
               </p>
@@ -307,7 +329,6 @@ function CustomerDetails() {
 
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Phone</p>
-
               <p className="font-medium text-gray-900 dark:text-white">
                 {customer.phone}
               </p>
@@ -317,7 +338,6 @@ function CustomerDetails() {
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Birth date
               </p>
-
               <p className="font-medium text-gray-900 dark:text-white">
                 {customer.birthDate}
               </p>
@@ -327,7 +347,6 @@ function CustomerDetails() {
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Address
               </p>
-
               <p className="font-medium text-gray-900 dark:text-white">
                 {customer.address}
               </p>
@@ -337,7 +356,6 @@ function CustomerDetails() {
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Postal code
               </p>
-
               <p className="font-medium text-gray-900 dark:text-white">
                 {customer.postalCode}
               </p>
@@ -345,7 +363,6 @@ function CustomerDetails() {
 
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">City</p>
-
               <p className="font-medium text-gray-900 dark:text-white">
                 {customer.city}
               </p>
@@ -353,7 +370,6 @@ function CustomerDetails() {
 
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
-
               <p className="font-medium text-gray-900 dark:text-white">
                 {customer.status}
               </p>
@@ -367,22 +383,63 @@ function CustomerDetails() {
             Accounts
           </h2>
 
-          <div className="overflow-hidden rounded-xl bg-white shadow dark:bg-gray-900">
+          {/* Mobile mini-cards */}
+          <div className="space-y-2 md:hidden">
+            {accounts.map((account) => (
+              <button
+                key={account.accountId}
+                type="button"
+                onClick={() => navigate(`/accounts/${account.accountId}`)}
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-left shadow-sm transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="min-w-0 truncate text-sm font-semibold text-gray-900 dark:text-white">
+                    {account.accountNumber}
+                  </span>
+
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      account.accountStatus === "ACTIVE"
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                    }`}
+                  >
+                    {account.accountStatus}
+                  </span>
+                </div>
+
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <span className="truncate text-xs text-gray-500 dark:text-gray-400">
+                    {account.accountType}
+                  </span>
+                  <span className="shrink-0 text-sm font-medium text-gray-900 dark:text-white">
+                    {Number(account.balance).toFixed(2)}
+                  </span>
+                </div>
+              </button>
+            ))}
+
+            {accounts.length === 0 && (
+              <div className="rounded-lg bg-white px-4 py-5 text-center text-sm text-gray-500 shadow dark:bg-gray-900 dark:text-gray-400">
+                No accounts found.
+              </div>
+            )}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto rounded-xl bg-white shadow dark:bg-gray-900 md:block">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
                 <tr>
                   <th className="px-4 py-3 text-gray-900 dark:text-white">
                     Account number
                   </th>
-
                   <th className="px-4 py-3 text-gray-900 dark:text-white">
                     Type
                   </th>
-
                   <th className="px-4 py-3 text-gray-900 dark:text-white">
                     Balance
                   </th>
-
                   <th className="px-4 py-3 text-gray-900 dark:text-white">
                     Status
                   </th>
@@ -399,15 +456,12 @@ function CustomerDetails() {
                     <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
                       {account.accountNumber}
                     </td>
-
                     <td className="px-4 py-3 text-gray-900 dark:text-white">
                       {account.accountType}
                     </td>
-
                     <td className="px-4 py-3 text-gray-900 dark:text-white">
                       {account.balance}
                     </td>
-
                     <td className="px-4 py-3 text-gray-900 dark:text-white">
                       {account.accountStatus}
                     </td>
@@ -435,26 +489,89 @@ function CustomerDetails() {
             Transactions
           </h2>
 
-          <div className="overflow-hidden rounded-xl bg-white shadow dark:bg-gray-900">
+          {/* Mobile cards */}
+          <div className="space-y-3 lg:hidden">
+            {sortedTransactions.map((transaction) => {
+              const isDeposit = transaction.transactionType === "DEPOSIT";
+              const statusClasses = getTransactionStatusClasses(
+                transaction.transactionStatus,
+              );
+
+              return (
+                <button
+                  key={transaction.transactionId}
+                  type="button"
+                  onClick={() =>
+                    navigate(`/transactions/${transaction.transactionId}`)
+                  }
+                  className="w-full min-w-0 rounded-xl border border-gray-200 bg-white p-3 text-left shadow-sm transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700"
+                >
+                  <div className="flex min-w-0 items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {formatTransactionDate(transaction.transactionDate)}
+                      </p>
+                      <p className="mt-1 break-all text-sm font-medium text-gray-900 dark:text-white">
+                        {transaction.accountNumber}
+                      </p>
+                    </div>
+
+                    <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                      {transaction.transactionType}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex min-w-0 items-center justify-between gap-2 border-t border-gray-100 pt-3 dark:border-gray-800">
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${statusClasses}`}
+                    >
+                      {transaction.transactionStatus}
+                    </span>
+
+                    <span
+                      className={
+                        isDeposit
+                          ? "text-sm font-semibold text-green-600 dark:text-green-400"
+                          : "text-sm font-semibold text-red-600 dark:text-red-400"
+                      }
+                    >
+                      {isDeposit ? "+" : "−"}
+                      {Number(transaction.amount).toFixed(2)} €
+                    </span>
+                  </div>
+
+                  <p className="mt-2 truncate text-xs text-gray-500 dark:text-gray-400">
+                    {transaction.description || "Transaction"} · #
+                    {transaction.transactionId}
+                  </p>
+                </button>
+              );
+            })}
+
+            {transactions.length === 0 && (
+              <div className="rounded-xl bg-white px-4 py-6 text-center text-sm text-gray-500 shadow dark:bg-gray-900 dark:text-gray-400">
+                No transactions found.
+              </div>
+            )}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto rounded-xl bg-white shadow dark:bg-gray-900 lg:block">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
                 <tr>
                   <th className="px-4 py-3 text-gray-900 dark:text-white">
                     Date
                   </th>
-
                   <th className="px-4 py-3 text-gray-900 dark:text-white">
                     Account
                   </th>
-
                   <th className="px-4 py-3 text-gray-900 dark:text-white">
                     Type
                   </th>
-
                   <th className="px-4 py-3 text-gray-900 dark:text-white">
                     Amount
                   </th>
-
                   <th className="px-4 py-3 text-gray-900 dark:text-white">
                     Status
                   </th>
@@ -462,35 +579,55 @@ function CustomerDetails() {
               </thead>
 
               <tbody>
-                {transactions.map((transaction) => (
-                  <tr
-                    key={transaction.transactionId}
-                    onClick={() =>
-                      navigate(`/transactions/${transaction.transactionId}`)
-                    }
-                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
-                  >
-                    <td className="px-4 py-3 text-gray-900 dark:text-white">
-                      {transaction.transactionDate}
-                    </td>
+                {sortedTransactions.map((transaction) => {
+                  const isDeposit = transaction.transactionType === "DEPOSIT";
+                  const statusClasses = getTransactionStatusClasses(
+                    transaction.transactionStatus,
+                  );
 
-                    <td className="px-4 py-3 text-gray-900 dark:text-white">
-                      {transaction.accountNumber}
-                    </td>
+                  return (
+                    <tr
+                      key={transaction.transactionId}
+                      onClick={() =>
+                        navigate(`/transactions/${transaction.transactionId}`)
+                      }
+                      className="cursor-pointer border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
+                    >
+                      <td className="whitespace-nowrap px-4 py-3 text-gray-900 dark:text-white">
+                        {formatTransactionDate(transaction.transactionDate)}
+                      </td>
 
-                    <td className="px-4 py-3 text-gray-900 dark:text-white">
-                      {transaction.transactionType}
-                    </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-gray-900 dark:text-white">
+                        {transaction.accountNumber}
+                      </td>
 
-                    <td className="px-4 py-3 text-gray-900 dark:text-white">
-                      {transaction.amount}
-                    </td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                          {transaction.transactionType}
+                        </span>
+                      </td>
 
-                    <td className="px-4 py-3 text-gray-900 dark:text-white">
-                      {transaction.transactionStatus}
-                    </td>
-                  </tr>
-                ))}
+                      <td
+                        className={
+                          isDeposit
+                            ? "whitespace-nowrap px-4 py-3 font-semibold text-green-600 dark:text-green-400"
+                            : "whitespace-nowrap px-4 py-3 font-semibold text-red-600 dark:text-red-400"
+                        }
+                      >
+                        {isDeposit ? "+" : "−"}
+                        {Number(transaction.amount).toFixed(2)} €
+                      </td>
+
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <span
+                          className={`rounded-full px-2 py-1 text-xs font-semibold ${statusClasses}`}
+                        >
+                          {transaction.transactionStatus}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
 
                 {transactions.length === 0 && (
                   <tr>
@@ -519,6 +656,7 @@ function CustomerDetails() {
           />
         )}
 
+        {/* Create account popup */}
         {showAccountForm && (
           <AccountForm
             customerId={customer.customerId}
@@ -531,6 +669,7 @@ function CustomerDetails() {
           />
         )}
 
+        {/* Create transaction popup */}
         {showTransactionForm && accounts.length > 0 && (
           <TransactionForm
             accounts={accounts}
@@ -555,7 +694,6 @@ function CustomerDetails() {
                   <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Current password
                   </label>
-
                   <input
                     type="password"
                     value={currentPassword}
@@ -568,7 +706,6 @@ function CustomerDetails() {
                   <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     New password
                   </label>
-
                   <input
                     type="password"
                     value={newPassword}
@@ -581,7 +718,6 @@ function CustomerDetails() {
                   <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Confirm new password
                   </label>
-
                   <input
                     type="password"
                     value={confirmPassword}

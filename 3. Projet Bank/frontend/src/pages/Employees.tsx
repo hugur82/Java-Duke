@@ -139,14 +139,15 @@ function Employees() {
   }
 
   return (
-    <main className="relative flex-1 overflow-auto p-6">
-      <div className="mb-6 flex items-center justify-between">
+    <main className="relative min-w-0 flex-1 overflow-auto p-4 sm:p-6">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Employees
           </h1>
-
-          <p className="text-gray-500 dark:text-gray-400">Manage employees</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Manage employees
+          </p>
         </div>
 
         <button
@@ -155,51 +156,98 @@ function Employees() {
             setCreateError("");
             setShowCreateForm(true);
           }}
-          className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+          className="self-start rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:opacity-90 dark:bg-white dark:text-black"
         >
           + New Employee
         </button>
       </div>
 
+      {/* Search */}
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
         <input
           type="text"
+          aria-label="Search by first name"
           placeholder="Search by first name"
           value={firstNameSearch}
           onChange={(event) => setFirstNameSearch(event.target.value)}
-          className="rounded-lg border border-gray-300 bg-white px-4 py-2 outline-none focus:ring-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+          className="min-w-0 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 outline-none focus:ring-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
         />
 
         <input
           type="text"
+          aria-label="Search by last name"
           placeholder="Search by last name"
           value={lastNameSearch}
           onChange={(event) => setLastNameSearch(event.target.value)}
-          className="rounded-lg border border-gray-300 bg-white px-4 py-2 outline-none focus:ring-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+          className="min-w-0 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 outline-none focus:ring-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
         />
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        <table className="w-full">
+      {/* Mobile cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:hidden">
+        {filteredEmployees.map((employee) => (
+          <article
+            key={employee.employeeId}
+            onClick={() => navigate(`/employees/${employee.employeeId}`)}
+            className="min-w-0 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900"
+          >
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="break-words font-semibold text-gray-900 dark:text-white">
+                  {employee.firstName} {employee.lastName}
+                </h2>
+                <p className="mt-1 break-all text-sm text-gray-600 dark:text-gray-400">
+                  {employee.email}
+                </p>
+              </div>
+
+              <span
+                className={
+                  employee.role === "ADMIN"
+                    ? "shrink-0 rounded-full bg-purple-100 px-2.5 py-1 text-xs font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                    : "shrink-0 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                }
+              >
+                {employee.role}
+              </span>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-gray-100 pt-3 dark:border-gray-800">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                Status
+              </span>
+              <span className="break-words text-right text-sm font-medium text-gray-900 dark:text-white">
+                {employee.status}
+              </span>
+            </div>
+          </article>
+        ))}
+
+        {filteredEmployees.length === 0 && (
+          <div className="col-span-full rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+            No employees found.
+          </div>
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden overflow-x-auto rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 md:block">
+        <table className="w-full text-left">
           <thead className="border-b border-gray-200 dark:border-gray-800">
             <tr>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+              <th className="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white">
                 First name
               </th>
-
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+              <th className="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white">
                 Last name
               </th>
-
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+              <th className="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white">
                 Email
               </th>
-
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+              <th className="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white">
                 Role
               </th>
-
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+              <th className="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white">
                 Status
               </th>
             </tr>
@@ -210,43 +258,45 @@ function Employees() {
               <tr
                 key={employee.employeeId}
                 onClick={() => navigate(`/employees/${employee.employeeId}`)}
-                className="cursor-pointer border-b border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
+                className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
               >
                 <td className="px-6 py-4 text-gray-900 dark:text-white">
                   {employee.firstName}
                 </td>
-
                 <td className="px-6 py-4 text-gray-900 dark:text-white">
                   {employee.lastName}
                 </td>
-
                 <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
                   {employee.email}
                 </td>
-
                 <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
                   {employee.role}
                 </td>
-
                 <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
                   {employee.status}
                 </td>
               </tr>
             ))}
+
+            {filteredEmployees.length === 0 && (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+                >
+                  No employees found.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
-
-        {filteredEmployees.length === 0 && (
-          <div className="p-6 text-center text-gray-500 dark:text-gray-400">
-            No employees found.
-          </div>
-        )}
       </div>
 
+      {/* Create employee modal */}
       {showCreateForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900">
-            <div className="mb-6 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
+          <div className="my-auto w-full max-w-lg rounded-lg bg-white p-4 shadow-xl dark:bg-gray-900 sm:p-6">
+            <div className="mb-6 flex items-center justify-between gap-3">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 New Employee
               </h2>
@@ -255,14 +305,15 @@ function Employees() {
                 type="button"
                 onClick={handleCloseCreateForm}
                 disabled={creating}
-                className="text-gray-500 hover:text-gray-900 disabled:opacity-50 dark:hover:text-white"
+                aria-label="Close form"
+                className="text-xl text-gray-500 hover:text-gray-900 disabled:opacity-50 dark:hover:text-white"
               >
                 ✕
               </button>
             </div>
 
             {createError && (
-              <div className="mb-4 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+              <div className="mb-4 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
                 {createError}
               </div>
             )}
@@ -272,13 +323,12 @@ function Employees() {
                 <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-white">
                   First name
                 </label>
-
                 <input
                   type="text"
                   value={firstName}
                   required
                   onChange={(event) => setFirstName(event.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 />
               </div>
 
@@ -286,13 +336,12 @@ function Employees() {
                 <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-white">
                   Last name
                 </label>
-
                 <input
                   type="text"
                   value={lastName}
                   required
                   onChange={(event) => setLastName(event.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 />
               </div>
 
@@ -300,13 +349,12 @@ function Employees() {
                 <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-white">
                   Email
                 </label>
-
                 <input
                   type="email"
                   value={email}
                   required
                   onChange={(event) => setEmail(event.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 />
               </div>
 
@@ -314,12 +362,12 @@ function Employees() {
                 <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-white">
                   Password
                 </label>
-
                 <input
                   type="password"
                   value={password}
+                  required
                   onChange={(event) => setPassword(event.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 />
               </div>
 
@@ -327,22 +375,20 @@ function Employees() {
                 <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-white">
                   Role
                 </label>
-
                 <select
                   value={role}
                   onChange={(event) =>
                     setRole(event.target.value as EmployeeRole)
                   }
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 >
                   <option value="EMPLOYEE">EMPLOYEE</option>
-
                   <option value="ADMIN">ADMIN</option>
                 </select>
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-6 flex flex-col-reverse justify-end gap-3 sm:flex-row">
               <button
                 type="button"
                 onClick={handleCloseCreateForm}
