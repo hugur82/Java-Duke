@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import { useNavigate } from "react-router-dom";
 import { getCustomers, type Customer } from "../api/customerApi";
 import CustomerForm from "../components/customer/CustomerForm";
@@ -9,6 +8,12 @@ function Customers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+
+  // Search filters
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [city, setCity] = useState("");
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,6 +61,23 @@ function Customers() {
     await loadCustomers();
   };
 
+  // Filter customers by first name, last name and city
+  const filteredCustomers = customers.filter((customer) => {
+    const matchesFirstName = customer.firstName
+      .toLowerCase()
+      .includes(firstName.trim().toLowerCase());
+
+    const matchesLastName = customer.lastName
+      .toLowerCase()
+      .includes(lastName.trim().toLowerCase());
+
+    const matchesCity = customer.city
+      .toLowerCase()
+      .includes(city.trim().toLowerCase());
+
+    return matchesFirstName && matchesLastName && matchesCity;
+  });
+
   return (
     <main className="min-w-0 flex-1 bg-gray-50 p-4 dark:bg-gray-950 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
@@ -80,6 +102,65 @@ function Customers() {
           </button>
         </div>
 
+        {/* Search */}
+        <section className="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-6">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div>
+              <label
+                htmlFor="firstName"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                First name
+              </label>
+
+              <input
+                id="firstName"
+                type="text"
+                value={firstName}
+                onChange={(event) => setFirstName(event.target.value)}
+                placeholder="Search by first name"
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition focus:border-gray-500 focus:ring-2 focus:ring-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:focus:border-gray-500 dark:focus:ring-gray-700"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="lastName"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Last name
+              </label>
+
+              <input
+                id="lastName"
+                type="text"
+                value={lastName}
+                onChange={(event) => setLastName(event.target.value)}
+                placeholder="Search by last name"
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition focus:border-gray-500 focus:ring-2 focus:ring-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:focus:border-gray-500 dark:focus:ring-gray-700"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="city"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                City
+              </label>
+
+              <input
+                id="city"
+                type="text"
+                value={city}
+                onChange={(event) => setCity(event.target.value)}
+                placeholder="Search by city"
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition focus:border-gray-500 focus:ring-2 focus:ring-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:focus:border-gray-500 dark:focus:ring-gray-700"
+              />
+            </div>
+          </div>
+        </section>
+
         {loading && (
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Loading customers...
@@ -94,10 +175,16 @@ function Customers() {
 
         {!loading && !error && (
           <>
+            {/* Results count */}
+            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+              {filteredCustomers.length} customer
+              {filteredCustomers.length !== 1 ? "s" : ""} found
+            </p>
+
             {/* Mobile: customer cards */}
             <div className="space-y-3 lg:hidden">
-              {customers.length > 0 ? (
-                customers.map((customer) => (
+              {filteredCustomers.length > 0 ? (
+                filteredCustomers.map((customer) => (
                   <button
                     key={customer.customerId}
                     type="button"
@@ -111,6 +198,7 @@ function Customers() {
                         <h2 className="truncate font-semibold text-gray-900 dark:text-white">
                           {customer.firstName} {customer.lastName}
                         </h2>
+
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                           Customer #{customer.customerId}
                         </p>
@@ -191,8 +279,8 @@ function Customers() {
                 </thead>
 
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                  {customers.length > 0 ? (
-                    customers.map((customer) => (
+                  {filteredCustomers.length > 0 ? (
+                    filteredCustomers.map((customer) => (
                       <tr
                         key={customer.customerId}
                         onClick={() =>
@@ -203,18 +291,23 @@ function Customers() {
                         <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                           #{customer.customerId}
                         </td>
+
                         <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
                           {customer.firstName} {customer.lastName}
                         </td>
+
                         <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
                           {customer.email}
                         </td>
+
                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
                           {customer.phone}
                         </td>
+
                         <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
                           {customer.city}
                         </td>
+
                         <td className="px-6 py-4 text-sm">
                           <span
                             className={

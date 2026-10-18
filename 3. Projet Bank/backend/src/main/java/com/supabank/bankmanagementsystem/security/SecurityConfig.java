@@ -30,7 +30,12 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .authenticationProvider(authenticationProvider)
-                .httpBasic(Customizer.withDefaults())
+                .httpBasic(httpBasic -> httpBasic.authenticationEntryPoint(
+                        (request, response, authException) ->
+                        response.sendError(
+                                jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED
+                        )
+                ))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/employees/**").hasRole("ADMIN")
                         .anyRequest().hasAnyRole("ADMIN", "EMPLOYEE")
