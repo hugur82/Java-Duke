@@ -7,6 +7,8 @@ import { getTransactions, type Transaction } from "../api/transactionApi";
 type StatementRow = {
   transaction: Transaction;
   balance: number;
+  isCredit: boolean;
+  isDebit: boolean;
 };
 
 function AccountDetails() {
@@ -14,7 +16,7 @@ function AccountDetails() {
   const navigate = useNavigate();
 
   const accountId = id ? Number(id) : NaN;
-  const invalidId = !id || Number.isNaN(accountId);
+  const invalidId = !id || !Number.isFinite(accountId);
 
   const [account, setAccount] = useState<Account | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -27,25 +29,24 @@ function AccountDetails() {
   const [statusLoading, setStatusLoading] = useState(false);
 
   useEffect(() => {
-    if (invalidId) {
-      return;
-    }
+    if (invalidId) return;
 
     let cancelled = false;
 
     Promise.all([getAccountById(accountId), getTransactions()])
       .then(([accountData, transactionData]) => {
-        if (cancelled) {
-          return;
-        }
+        if (cancelled) return;
 
         setAccount(accountData);
 
+        // Include accepted transactions where this account is either
+        // the source account or the destination account.
         const accountTransactions = transactionData
           .filter(
             (transaction) =>
-              transaction.accountId === accountId &&
-              transaction.transactionStatus === "ACCEPTED",
+              transaction.transactionStatus === "ACCEPTED" &&
+              (transaction.accountId === accountId ||
+                transaction.destinationAccountId === accountId),
           )
           .sort(
             (a, b) =>
@@ -55,15 +56,15 @@ function AccountDetails() {
 
         setTransactions(accountTransactions);
       })
-      .catch((error: Error) => {
+      .catch((err: unknown) => {
         if (!cancelled) {
-          setError(error.message);
+          setError(
+            err instanceof Error ? err.message : "Unable to load account.",
+          );
         }
       })
       .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       });
 
     return () => {
@@ -72,9 +73,7 @@ function AccountDetails() {
   }, [accountId, invalidId]);
 
   const openStatusForm = () => {
-    if (!account) {
-      return;
-    }
+    if (!account) return;
 
     setSelectedStatus(account.accountStatus);
     setStatusError("");
@@ -82,9 +81,7 @@ function AccountDetails() {
   };
 
   const handleStatusUpdate = async () => {
-    if (!account) {
-      return;
-    }
+    if (!account) return;
 
     if (selectedStatus === "CLOSED" && Number(account.balance) !== 0) {
       setStatusError("An account can be closed only when its balance is zero.");
@@ -103,9 +100,12 @@ function AccountDetails() {
     try {
       setStatusLoading(true);
       setStatusError("");
-      setAccount(
-        await updateAccount(account.accountId, { status: selectedStatus }),
-      );
+
+      const updatedAccount = await updateAccount(account.accountId, {
+        status: selectedStatus,
+      });
+
+      setAccount(updatedAccount);
       setShowStatusForm(false);
     } catch (err) {
       setStatusError(
@@ -116,44 +116,57 @@ function AccountDetails() {
     }
   };
 
-  /*
-   * Calculate the balance chronologically.
-   *
-   * The calculation starts from the opening balance
-   * and applies each transaction in chronological order.
-   */
+  // Determine whether each movement is a credit or debit for THIS account.
   const statementRows = useMemo<StatementRow[]>(() => {
-    if (!account) {
-      return [];
-    }
+    if (!account) return [];
 
     let runningBalance = Number(account.openingBalance);
 
     return transactions.map((transaction) => {
-      if (transaction.transactionType === "DEPOSIT") {
+      const isIncomingTransfer =
+        transaction.transactionType === "TRANSFER" &&
+        transaction.destinationAccountId === accountId;
+
+      const isOutgoingTransfer =
+        transaction.transactionType === "TRANSFER" &&
+        transaction.accountId === accountId;
+
+      const isCredit =
+        transaction.transactionType === "DEPOSIT" || isIncomingTransfer;
+
+      const isDebit =
+        transaction.transactionType === "WITHDRAWAL" || isOutgoingTransfer;
+
+      if (isCredit) {
         runningBalance += Number(transaction.amount);
-      } else {
+      } else if (isDebit) {
         runningBalance -= Number(transaction.amount);
       }
 
       return {
         transaction,
         balance: runningBalance,
+        isCredit,
+        isDebit,
       };
     });
-  }, [account, transactions]);
+  }, [account, transactions, accountId]);
 
-  const totalDebits = useMemo(() => {
-    return transactions
-      .filter((transaction) => transaction.transactionType === "WITHDRAWAL")
-      .reduce((total, transaction) => total + Number(transaction.amount), 0);
-  }, [transactions]);
+  const totalDebits = useMemo(
+    () =>
+      statementRows
+        .filter((row) => row.isDebit)
+        .reduce((total, row) => total + Number(row.transaction.amount), 0),
+    [statementRows],
+  );
 
-  const totalCredits = useMemo(() => {
-    return transactions
-      .filter((transaction) => transaction.transactionType === "DEPOSIT")
-      .reduce((total, transaction) => total + Number(transaction.amount), 0);
-  }, [transactions]);
+  const totalCredits = useMemo(
+    () =>
+      statementRows
+        .filter((row) => row.isCredit)
+        .reduce((total, row) => total + Number(row.transaction.amount), 0),
+    [statementRows],
+  );
 
   if (invalidId) {
     return (
@@ -195,11 +208,26 @@ function AccountDetails() {
     );
   }
 
-  if (!account) {
-    return null;
-  }
+  if (!account) return null;
 
   const currentBalance = Number(account.balance);
+
+  const getDescription = (transaction: Transaction) => {
+    if (transaction.description) return transaction.description;
+
+    switch (transaction.transactionType) {
+      case "DEPOSIT":
+        return "Deposit";
+      case "WITHDRAWAL":
+        return "Withdrawal";
+      case "TRANSFER":
+        return transaction.destinationAccountId === accountId
+          ? `Transfer received from ${transaction.accountNumber}`
+          : `Transfer to ${transaction.destinationAccountNumber ?? "another account"}`;
+    }
+  };
+
+  const formatDate = (date: string) => new Date(date).toLocaleDateString();
 
   return (
     <main className="min-w-0 flex-1 bg-gray-50 p-4 dark:bg-gray-950 sm:p-6 lg:p-8">
@@ -220,14 +248,17 @@ function AccountDetails() {
                 <p className="mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">
                   Account statement
                 </p>
+
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                   {account.accountType === "CHECKING"
                     ? "Checking Account"
                     : "Savings Account"}
                 </h1>
+
                 <p className="mt-2 break-all text-sm text-gray-500 dark:text-gray-400">
                   Account number: {account.accountNumber}
                 </p>
+
                 <p className="mt-1 break-all text-sm text-gray-500 dark:text-gray-400">
                   IBAN: {account.iban}
                 </p>
@@ -263,6 +294,7 @@ function AccountDetails() {
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Account holder
               </p>
+
               <button
                 type="button"
                 onClick={() => navigate(`/customers/${account.customerId}`)}
@@ -277,7 +309,7 @@ function AccountDetails() {
                 Opening date
               </p>
               <p className="mt-1 font-semibold text-gray-900 dark:text-white">
-                {new Date(account.creationDate).toLocaleDateString()}
+                {formatDate(account.creationDate)}
               </p>
             </div>
           </div>
@@ -329,6 +361,7 @@ function AccountDetails() {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 Change Account Status
               </h2>
+
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Only ACTIVE accounts can process transactions.
               </p>
@@ -343,6 +376,7 @@ function AccountDetails() {
                 <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Status
                 </label>
+
                 <select
                   value={selectedStatus}
                   onChange={(event) =>
@@ -366,6 +400,7 @@ function AccountDetails() {
                 >
                   Cancel
                 </button>
+
                 <button
                   type="button"
                   onClick={handleStatusUpdate}
@@ -393,10 +428,10 @@ function AccountDetails() {
             </p>
           </div>
 
-          {/* Mobile: compact rows */}
+          {/* Mobile */}
           <div className="divide-y divide-gray-200 dark:divide-gray-800 md:hidden">
-            {[...statementRows].reverse().map(({ transaction, balance }) => {
-              const isDeposit = transaction.transactionType === "DEPOSIT";
+            {[...statementRows].reverse().map((row) => {
+              const { transaction, balance, isCredit, isDebit } = row;
 
               return (
                 <button
@@ -407,41 +442,35 @@ function AccountDetails() {
                   }
                   className="block w-full p-4 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
-                  {/* Première ligne : date et solde */}
                   <div className="flex items-center justify-between gap-3">
                     <span className="shrink-0 text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(
-                        transaction.transactionDate,
-                      ).toLocaleDateString()}
+                      {formatDate(transaction.transactionDate)}
                     </span>
-
                     <span className="shrink-0 text-sm font-semibold text-gray-900 dark:text-white">
                       CHF {balance.toFixed(2)}
                     </span>
                   </div>
 
-                  {/* Deuxième ligne : libellé et montant du mouvement */}
                   <div className="mt-2 flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="break-words text-sm font-medium text-gray-900 dark:text-white">
-                        {transaction.description ||
-                          (isDeposit ? "Deposit" : "Withdrawal")}
+                        {getDescription(transaction)}
                       </p>
-
                       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Transaction #{transaction.transactionId}
+                        {transaction.transactionType} · Transaction #
+                        {transaction.transactionId}
                       </p>
                     </div>
 
                     <span
                       className={`shrink-0 text-right text-sm font-semibold sm:text-base ${
-                        isDeposit
+                        isCredit
                           ? "text-green-600 dark:text-green-400"
                           : "text-red-600 dark:text-red-400"
                       }`}
                     >
-                      {isDeposit ? "+" : "−"} CHF{" "}
-                      {Number(transaction.amount).toFixed(2)}
+                      {isCredit ? "+" : isDebit ? "−" : ""}
+                      CHF {Number(transaction.amount).toFixed(2)}
                     </span>
                   </div>
                 </button>
@@ -455,7 +484,7 @@ function AccountDetails() {
                     Account opening
                   </p>
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(account.creationDate).toLocaleDateString()}
+                    {formatDate(account.creationDate)}
                   </p>
                 </div>
                 <div className="text-right">
@@ -481,7 +510,7 @@ function AccountDetails() {
             </div>
           </div>
 
-          {/* Desktop: original table */}
+          {/* Desktop */}
           <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left">
               <thead className="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
@@ -493,58 +522,59 @@ function AccountDetails() {
                   <th className="px-6 py-4 text-right font-medium">Balance</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                {[...statementRows]
-                  .reverse()
-                  .map(({ transaction, balance }) => {
-                    const isDeposit = transaction.transactionType === "DEPOSIT";
 
-                    return (
-                      <tr
-                        key={transaction.transactionId}
-                        onClick={() =>
-                          navigate(`/transactions/${transaction.transactionId}`)
-                        }
-                        className="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-                      >
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                          {new Date(
-                            transaction.transactionDate,
-                          ).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            {transaction.description ||
-                              (isDeposit ? "Deposit" : "Withdrawal")}
-                          </p>
-                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Transaction #{transaction.transactionId}
-                          </p>
-                        </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                          {!isDeposit && (
-                            <span className="text-red-600 dark:text-red-400">
-                              CHF {Number(transaction.amount).toFixed(2)}
-                            </span>
-                          )}
-                        </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                          {isDeposit && (
-                            <span className="text-green-600 dark:text-green-400">
-                              CHF {Number(transaction.amount).toFixed(2)}
-                            </span>
-                          )}
-                        </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
-                          CHF {balance.toFixed(2)}
-                        </td>
-                      </tr>
-                    );
-                  })}
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                {[...statementRows].reverse().map((row) => {
+                  const { transaction, balance, isCredit, isDebit } = row;
+
+                  return (
+                    <tr
+                      key={transaction.transactionId}
+                      onClick={() =>
+                        navigate(`/transactions/${transaction.transactionId}`)
+                      }
+                      className="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                        {formatDate(transaction.transactionDate)}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {getDescription(transaction)}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          {transaction.transactionType} · Transaction #
+                          {transaction.transactionId}
+                        </p>
+                      </td>
+
+                      <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                        {isDebit && (
+                          <span className="text-red-600 dark:text-red-400">
+                            CHF {Number(transaction.amount).toFixed(2)}
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                        {isCredit && (
+                          <span className="text-green-600 dark:text-green-400">
+                            CHF {Number(transaction.amount).toFixed(2)}
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                        CHF {balance.toFixed(2)}
+                      </td>
+                    </tr>
+                  );
+                })}
 
                 <tr className="bg-gray-50 dark:bg-gray-800/30">
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                    {new Date(account.creationDate).toLocaleDateString()}
+                    {formatDate(account.creationDate)}
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -563,6 +593,7 @@ function AccountDetails() {
                   </td>
                 </tr>
               </tbody>
+
               <tfoot className="border-t-2 border-gray-300 dark:border-gray-700">
                 <tr>
                   <td

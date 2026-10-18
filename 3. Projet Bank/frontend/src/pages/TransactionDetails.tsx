@@ -25,27 +25,23 @@ function TransactionDetails() {
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    if (invalidId) {
-      return;
-    }
+    if (invalidId) return;
 
     let cancelled = false;
 
     getTransactionById(transactionId)
       .then((data) => {
-        if (!cancelled) {
-          setTransaction(data);
-        }
+        if (!cancelled) setTransaction(data);
       })
-      .catch((error: Error) => {
+      .catch((err: unknown) => {
         if (!cancelled) {
-          setError(error.message);
+          setError(
+            err instanceof Error ? err.message : "Unable to load transaction.",
+          );
         }
       })
       .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       });
 
     return () => {
@@ -54,9 +50,7 @@ function TransactionDetails() {
   }, [transactionId, invalidId]);
 
   const handleProcess = async () => {
-    if (!transaction) {
-      return;
-    }
+    if (!transaction) return;
 
     try {
       setProcessing(true);
@@ -72,9 +66,7 @@ function TransactionDetails() {
   };
 
   const openEditForm = () => {
-    if (!transaction) {
-      return;
-    }
+    if (!transaction) return;
 
     setAmount(String(transaction.amount));
     setDescription(transaction.description ?? "");
@@ -85,11 +77,10 @@ function TransactionDetails() {
   const handleUpdate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!transaction) {
-      return;
-    }
+    if (!transaction) return;
 
     const numericAmount = Number(amount);
+
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
       setError("Amount must be greater than zero.");
       return;
@@ -98,12 +89,14 @@ function TransactionDetails() {
     try {
       setUpdating(true);
       setError("");
+
       setTransaction(
         await updateTransaction(transaction.transactionId, {
           amount: numericAmount,
           ...(description.trim() ? { description: description.trim() } : {}),
         }),
       );
+
       setShowEditForm(false);
     } catch (err) {
       setError(
@@ -138,7 +131,7 @@ function TransactionDetails() {
     );
   }
 
-  if (error) {
+  if (error && !transaction) {
     return (
       <main className="flex-1 overflow-y-auto bg-gray-50 p-8 dark:bg-gray-950">
         <div className="mx-auto max-w-4xl">
@@ -158,9 +151,9 @@ function TransactionDetails() {
     );
   }
 
-  if (!transaction) {
-    return null;
-  }
+  if (!transaction) return null;
+
+  const isTransfer = transaction.transactionType === "TRANSFER";
 
   return (
     <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 p-4 sm:p-6 lg:p-8 dark:bg-gray-950">
@@ -234,8 +227,11 @@ function TransactionDetails() {
           </h2>
 
           <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2">
+            {/* Sender / source customer */}
             <div className="min-w-0 md:col-span-2">
-              <p className="text-sm text-gray-400">Customer</p>
+              <p className="text-sm text-gray-400">
+                {isTransfer ? "Sender" : "Customer"}
+              </p>
 
               <button
                 type="button"
@@ -255,18 +251,92 @@ function TransactionDetails() {
               </p>
             </div>
 
+            {/* Source account */}
             <div className="min-w-0">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Account
+                {isTransfer ? "Source account" : "Account"}
               </p>
+
               <button
                 type="button"
                 onClick={() => navigate(`/accounts/${transaction.accountId}`)}
-                className="mt-1 font-medium text-gray-900 hover:underline dark:text-white"
+                className="mt-1 block break-words text-left font-medium text-gray-900 hover:underline dark:text-white"
               >
                 #{transaction.accountId}
+                {transaction.accountNumber
+                  ? ` · ${transaction.accountNumber}`
+                  : ""}
               </button>
+
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Account type: {transaction.accountType ?? "Unavailable"}
+              </p>
             </div>
+
+            {/* Recipient: transfers only */}
+            {isTransfer && (
+              <>
+                <div className="min-w-0 md:col-span-2">
+                  <div className="my-1 border-t border-gray-200 dark:border-gray-700" />
+
+                  <p className="mt-4 text-sm text-gray-400">Recipient</p>
+
+                  {transaction.destinationCustomerId != null ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(
+                          `/customers/${transaction.destinationCustomerId}`,
+                        )
+                      }
+                      className="mt-2 max-w-full break-words text-left text-2xl font-medium text-gray-900 hover:underline sm:text-3xl dark:text-white"
+                    >
+                      {transaction.destinationCustomerFirstName}{" "}
+                      {transaction.destinationCustomerLastName}
+                    </button>
+                  ) : (
+                    <p className="mt-2 text-lg font-medium text-gray-500 dark:text-gray-400">
+                      Recipient information unavailable
+                    </p>
+                  )}
+                </div>
+
+                {/* Destination account */}
+                <div className="min-w-0">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Destination account
+                  </p>
+
+                  {transaction.destinationAccountId != null ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(
+                            `/accounts/${transaction.destinationAccountId}`,
+                          )
+                        }
+                        className="mt-1 block break-words text-left font-medium text-gray-900 hover:underline dark:text-white"
+                      >
+                        #{transaction.destinationAccountId}
+                        {transaction.destinationAccountNumber
+                          ? ` · ${transaction.destinationAccountNumber}`
+                          : ""}
+                      </button>
+
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Account type:{" "}
+                        {transaction.destinationAccountType ?? "Unavailable"}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="mt-1 font-medium text-gray-500 dark:text-gray-400">
+                      Destination account unavailable
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
 
             <div className="min-w-0">
               <p className="text-sm text-gray-500 dark:text-gray-400">Date</p>
@@ -285,7 +355,7 @@ function TransactionDetails() {
             <div className="min-w-0">
               <p className="text-sm text-gray-500 dark:text-gray-400">Amount</p>
               <p className="mt-1 break-words text-2xl font-bold text-gray-900 dark:text-white">
-                {transaction.amount}
+                {Number(transaction.amount).toFixed(2)}
               </p>
             </div>
 
@@ -307,12 +377,14 @@ function TransactionDetails() {
           </div>
         </section>
 
+        {/* Edit transaction modal */}
         {showEditForm && (
           <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 sm:items-center">
             <div className="my-auto w-full max-w-md rounded-xl bg-white p-5 shadow-xl sm:p-6 dark:bg-gray-900">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 Update Transaction
               </h2>
+
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 You can edit a transaction only while its status is CREATED.
               </p>
@@ -353,6 +425,7 @@ function TransactionDetails() {
                   >
                     Cancel
                   </button>
+
                   <button
                     type="submit"
                     disabled={updating}

@@ -1,3 +1,4 @@
+
 package com.supabank.bankmanagementsystem.service;
 
 import java.math.BigDecimal;
@@ -9,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.supabank.bankmanagementsystem.dto.TransactionCreateRequestDTO;
 import com.supabank.bankmanagementsystem.dto.TransactionResponseDTO;
@@ -24,7 +26,6 @@ import com.supabank.bankmanagementsystem.exception.TransactionProcessingNotAllow
 import com.supabank.bankmanagementsystem.exception.TransactionUpdateNotAllowedException;
 import com.supabank.bankmanagementsystem.repository.AccountRepository;
 import com.supabank.bankmanagementsystem.repository.TransactionRepository;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TransactionService {
@@ -32,7 +33,9 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
 
-    public TransactionService(TransactionRepository transactionRepository, AccountRepository accountRepository) {
+    public TransactionService(
+            TransactionRepository transactionRepository,
+            AccountRepository accountRepository) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
     }
@@ -44,7 +47,13 @@ public class TransactionService {
                 .toList();
     }
 
-    public TransactionResponseDTO toResponseDTO(TransactionEntity transactionEntity) {
+    public TransactionResponseDTO toResponseDTO(
+            TransactionEntity transactionEntity) {
+
+        AccountEntity sourceAccount = transactionEntity.getAccount();
+        AccountEntity destinationAccount =
+                transactionEntity.getDestinationAccount();
+
         return new TransactionResponseDTO(
                 transactionEntity.getTransactionId(),
                 transactionEntity.getTransactionDate(),
@@ -53,64 +62,79 @@ public class TransactionService {
                 transactionEntity.getDescription(),
                 transactionEntity.getTransactionStatus(),
 
-                transactionEntity.getAccount().getAccountId(),
-                transactionEntity.getAccount().getAccountNumber(),
+                // Source account
+                sourceAccount.getAccountId(),
+                sourceAccount.getAccountNumber(),
+                sourceAccount.getAccountType().name(),
+                sourceAccount.getCustomer().getCustomerId(),
+                sourceAccount.getCustomer().getFirstName(),
+                sourceAccount.getCustomer().getLastName(),
 
-                transactionEntity.getAccount().getCustomer().getCustomerId(),
-                transactionEntity.getAccount().getCustomer().getFirstName(),
-                transactionEntity.getAccount().getCustomer().getLastName()
+                // Destination account (nullable)
+                destinationAccount != null
+                        ? destinationAccount.getAccountId()
+                        : null,
+                destinationAccount != null
+                        ? destinationAccount.getAccountNumber()
+                        : null,
+                destinationAccount != null
+                        ? destinationAccount.getAccountType().name()
+                        : null,
+                destinationAccount != null
+                        ? destinationAccount.getCustomer().getCustomerId()
+                        : null,
+                destinationAccount != null
+                        ? destinationAccount.getCustomer().getFirstName()
+                        : null,
+                destinationAccount != null
+                        ? destinationAccount.getCustomer().getLastName()
+                        : null
         );
     }
 
 
-public TransactionResponseDTO createTransaction(
-        TransactionCreateRequestDTO transactionCreateRequestDTO) {
+    public TransactionResponseDTO createTransaction(
+            TransactionCreateRequestDTO request) {
 
-    TransactionEntity transactionEntity = new TransactionEntity();
+        TransactionEntity transactionEntity = new TransactionEntity();
 
-    AccountEntity accountEntity = accountRepository
-            .findById(transactionCreateRequestDTO.getAccountId())
-            .orElseThrow(
-                    () -> new AccountNotFoundException(
-                            "Account not found with id "
-                                    + transactionCreateRequestDTO.getAccountId()
-                    )
-            );
+        AccountEntity sourceAccount = accountRepository
+                .findById(request.getAccountId())
+                .orElseThrow(() -> new AccountNotFoundException(
+                        "Account not found with id " + request.getAccountId()));
 
-    if (transactionCreateRequestDTO.getDestinationAccountId() != null) {
-        AccountEntity destinationAccount = accountRepository
-                .findById(transactionCreateRequestDTO.getDestinationAccountId())
-                .orElseThrow(
-                        () -> new AccountNotFoundException(
-                                "Destination account not found with id "
-                                        + transactionCreateRequestDTO.getDestinationAccountId()
-                        )
-                );
-        transactionEntity.setDestinationAccount(destinationAccount);
+        if (request.getDestinationAccountId() != null) {
+            AccountEntity destinationAccount = accountRepository
+                    .findById(request.getDestinationAccountId())
+                    .orElseThrow(() -> new AccountNotFoundException(
+                            "Destination account not found with id "
+                                    + request.getDestinationAccountId()));
+
+            transactionEntity.setDestinationAccount(destinationAccount);
+        }
+
+        transactionEntity.setTransactionDate(LocalDateTime.now());
+        transactionEntity.setAmount(request.getAmount());
+        transactionEntity.setTransactionType(request.getTransactionType());
+        transactionEntity.setDescription(request.getDescription());
+        transactionEntity.setTransactionStatus(TransactionStatus.CREATED);
+        transactionEntity.setAccount(sourceAccount);
+
+        return toResponseDTO(transactionRepository.save(transactionEntity));
     }
-
-    transactionEntity.setTransactionDate(LocalDateTime.now());
-    transactionEntity.setAmount(transactionCreateRequestDTO.getAmount());
-    transactionEntity.setTransactionType(transactionCreateRequestDTO.getTransactionType());
-    transactionEntity.setDescription(transactionCreateRequestDTO.getDescription()    );
-    transactionEntity.setTransactionStatus(TransactionStatus.CREATED);
-    transactionEntity.setAccount(accountEntity);
-
-    return toResponseDTO(transactionRepository.save(transactionEntity));
-}
 
     public TransactionResponseDTO findTransactionById(Long transactionId) {
         TransactionEntity transactionEntity = transactionRepository
                 .findById(transactionId)
                 .orElseThrow(() -> new TransactionNotFoundException(
                         "Transaction not found with id " + transactionId));
+
         return toResponseDTO(transactionEntity);
     }
 
-
     public TransactionResponseDTO updateTransaction(
             Long transactionId,
-            TransactionUpdateRequestDTO transactionUpdateRequestDTO) {
+            TransactionUpdateRequestDTO request) {
 
         TransactionEntity transactionEntity = transactionRepository
                 .findById(transactionId)
@@ -122,12 +146,11 @@ public TransactionResponseDTO createTransaction(
                     "Transaction can only be updated when its status is CREATED");
         }
 
-        transactionEntity.setAmount(transactionUpdateRequestDTO.getAmount());
-        transactionEntity.setDescription(transactionUpdateRequestDTO.getDescription());
+        transactionEntity.setAmount(request.getAmount());
+        transactionEntity.setDescription(request.getDescription());
 
         return toResponseDTO(transactionRepository.save(transactionEntity));
     }
-
 
     @Transactional
     public TransactionResponseDTO processTransaction(Long transactionId) {
@@ -156,29 +179,22 @@ public TransactionResponseDTO createTransaction(
 
         if (type == TransactionType.DEPOSIT) {
 
-            sourceAccount.setBalance(
-                    sourceAccount.getBalance().add(amount)
-            );
-
+            sourceAccount.setBalance(sourceAccount.getBalance().add(amount));
             transactionEntity.setTransactionStatus(TransactionStatus.ACCEPTED);
 
         } else if (type == TransactionType.WITHDRAWAL) {
 
             if (sourceAccount.getBalance().compareTo(amount) >= 0) {
-
-                sourceAccount.setBalance(
-                        sourceAccount.getBalance().subtract(amount)
-                );
-
+                sourceAccount.setBalance(sourceAccount.getBalance().subtract(amount));
                 transactionEntity.setTransactionStatus(TransactionStatus.ACCEPTED);
-
             } else {
                 transactionEntity.setTransactionStatus(TransactionStatus.REJECTED);
             }
 
         } else if (type == TransactionType.TRANSFER) {
 
-            AccountEntity destinationAccount = transactionEntity.getDestinationAccount();
+            AccountEntity destinationAccount =
+                    transactionEntity.getDestinationAccount();
 
             if (destinationAccount == null
                     || destinationAccount.getAccountId().equals(sourceAccount.getAccountId())
@@ -188,15 +204,8 @@ public TransactionResponseDTO createTransaction(
 
             } else if (sourceAccount.getBalance().compareTo(amount) >= 0) {
 
-                // Debit the source account.
-                sourceAccount.setBalance(
-                        sourceAccount.getBalance().subtract(amount)
-                );
-
-                // Credit the destination account.
-                destinationAccount.setBalance(
-                        destinationAccount.getBalance().add(amount)
-                );
+                sourceAccount.setBalance(sourceAccount.getBalance().subtract(amount));
+                destinationAccount.setBalance(destinationAccount.getBalance().add(amount));
 
                 accountRepository.save(sourceAccount);
                 accountRepository.save(destinationAccount);
@@ -220,27 +229,22 @@ public TransactionResponseDTO createTransaction(
             int page,
             int size,
             String sortBy,
-            String direction
-    ) {
+            String direction) {
+
         Pageable pageable = PageRequest.of(
                 page,
                 size,
-                Sort.by(
-                        Sort.Direction.fromString(direction),
-                        sortBy
-                )
+                Sort.by(Sort.Direction.fromString(direction), sortBy)
         );
 
         String normalizedFirstName = normalizeSearchParameter(firstName);
         String normalizedLastName = normalizeSearchParameter(lastName);
 
-        return transactionRepository
-                .searchTransactions(
+        return transactionRepository.searchTransactions(
                         normalizedFirstName,
                         normalizedLastName,
                         accountId,
-                        pageable
-                )
+                        pageable)
                 .map(this::toResponseDTO);
     }
 

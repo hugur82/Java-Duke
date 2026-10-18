@@ -1,3 +1,4 @@
+
 package com.supabank.bankmanagementsystem.repository;
 
 import com.supabank.bankmanagementsystem.entity.TransactionEntity;
@@ -12,7 +13,9 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
     @Query("""
         SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END
         FROM TransactionEntity t
-        WHERE t.account.customer.customerId = :customerId
+        WHERE
+            t.account.customer.customerId = :customerId
+            OR t.destinationAccount.customer.customerId = :customerId
     """)
     boolean existsByCustomerId(@Param("customerId") Long customerId);
 
@@ -21,17 +24,22 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
     @Query("""
         SELECT t
         FROM TransactionEntity t
-        JOIN t.account a
-        JOIN a.customer c
+        LEFT JOIN t.account sourceAccount
+        LEFT JOIN sourceAccount.customer sourceCustomer
+        LEFT JOIN t.destinationAccount destinationAccount
+        LEFT JOIN destinationAccount.customer destinationCustomer
         WHERE
             (:firstName IS NULL OR
-                LOWER(c.firstName) LIKE LOWER(CONCAT('%', :firstName, '%')))
+                LOWER(sourceCustomer.firstName) LIKE LOWER(CONCAT('%', :firstName, '%'))
+                OR LOWER(destinationCustomer.firstName) LIKE LOWER(CONCAT('%', :firstName, '%')))
         AND
             (:lastName IS NULL OR
-                LOWER(c.lastName) LIKE LOWER(CONCAT('%', :lastName, '%')))
+                LOWER(sourceCustomer.lastName) LIKE LOWER(CONCAT('%', :lastName, '%'))
+                OR LOWER(destinationCustomer.lastName) LIKE LOWER(CONCAT('%', :lastName, '%')))
         AND
             (:accountId IS NULL OR
-                a.accountId = :accountId)
+                sourceAccount.accountId = :accountId
+                OR destinationAccount.accountId = :accountId)
         """)
     Page<TransactionEntity> searchTransactions(
             @Param("firstName") String firstName,

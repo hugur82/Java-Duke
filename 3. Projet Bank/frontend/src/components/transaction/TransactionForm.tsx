@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { type Account } from "../../api/accountApi";
+import { getAccounts, type Account } from "../../api/accountApi";
 import { createTransaction } from "../../api/transactionApi";
 
 type TransactionType = "DEPOSIT" | "WITHDRAWAL" | "TRANSFER";
@@ -16,10 +16,16 @@ function TransactionForm({
   onSuccess,
   onCancel,
 }: TransactionFormProps) {
+  const [allAccounts, setAllAccounts] = useState<Account[]>([]);
+  const [accountsLoading, setAccountsLoading] = useState(true);
+  const [accountsLoadError, setAccountsLoadError] = useState("");
+
   const [accountId, setAccountId] = useState(
     String(accounts[0]?.accountId ?? ""),
   );
   const [destinationAccountId, setDestinationAccountId] = useState("");
+  const [destinationOpen, setDestinationOpen] = useState(false);
+
   const [transactionType, setTransactionType] =
     useState<TransactionType>("DEPOSIT");
   const [amount, setAmount] = useState("");
@@ -28,6 +34,64 @@ function TransactionForm({
   const [submitting, setSubmitting] = useState(false);
 
   const isTransfer = transactionType === "TRANSFER";
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadAccounts = async () => {
+      try {
+        const data = await getAccounts();
+
+        if (!cancelled) {
+          setAllAccounts(data);
+          setAccountsLoadError("");
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setAccountsLoadError(
+            err instanceof Error ? err.message : "Unable to load accounts.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setAccountsLoading(false);
+        }
+      }
+    };
+
+    loadAccounts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const sourceAccount = accounts.find(
+    (account) => String(account.accountId) === accountId,
+  );
+
+  const currentCustomerId =
+    sourceAccount?.customerId ?? accounts[0]?.customerId;
+
+  const sameCustomerAccounts = accounts.filter(
+    (account) => String(account.accountId) !== accountId,
+  );
+
+  const otherCustomerAccounts = allAccounts.filter(
+    (account) =>
+      account.customerId !== currentCustomerId &&
+      String(account.accountId) !== accountId,
+  );
+
+  const destinationAccount = allAccounts.find(
+    (account) => String(account.accountId) === destinationAccountId,
+  );
+
+  const selectDestination = (account: Account) => {
+    setDestinationAccountId(String(account.accountId));
+    setDestinationOpen(false);
+    setError("");
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -46,6 +110,16 @@ function TransactionForm({
     }
 
     if (isTransfer) {
+      if (accountsLoading) {
+        setError("Please wait until the accounts have loaded.");
+        return;
+      }
+
+      if (accountsLoadError) {
+        setError("Unable to load destination accounts. Please try again.");
+        return;
+      }
+
       if (!destinationAccountId) {
         setError("Please select a destination account.");
         return;
@@ -53,6 +127,15 @@ function TransactionForm({
 
       if (destinationAccountId === accountId) {
         setError("Source and destination accounts must be different.");
+        return;
+      }
+
+      const destinationExists = allAccounts.some(
+        (account) => String(account.accountId) === destinationAccountId,
+      );
+
+      if (!destinationExists) {
+        setError("The selected destination account is unavailable.");
         return;
       }
     }
@@ -98,6 +181,7 @@ function TransactionForm({
         )}
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+          {/* Source account */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Source account
@@ -105,7 +189,12 @@ function TransactionForm({
 
             <select
               value={accountId}
-              onChange={(event) => setAccountId(event.target.value)}
+              onChange={(event) => {
+                setAccountId(event.target.value);
+                setDestinationAccountId("");
+                setDestinationOpen(false);
+                setError("");
+              }}
               required
               disabled={submitting}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-gray-500 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
@@ -118,6 +207,7 @@ function TransactionForm({
             </select>
           </div>
 
+          {/* Transaction type */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Transaction type
@@ -128,6 +218,7 @@ function TransactionForm({
               onChange={(event) => {
                 setTransactionType(event.target.value as TransactionType);
                 setError("");
+                setDestinationOpen(false);
               }}
               disabled={submitting}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-gray-500 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
@@ -138,41 +229,135 @@ function TransactionForm({
             </select>
           </div>
 
+          {/* Destination account */}
           {isTransfer && (
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Destination account
               </label>
 
-              <select
-                value={destinationAccountId}
-                onChange={(event) =>
-                  setDestinationAccountId(event.target.value)
-                }
-                required
-                disabled={submitting}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-gray-500 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              >
-                <option value="">Select a destination account</option>
-                {accounts
-                  .filter((account) => String(account.accountId) !== accountId)
-                  .map((account) => (
-                    <option key={account.accountId} value={account.accountId}>
-                      {account.accountNumber} - {account.accountType}
-                    </option>
-                  ))}
-              </select>
-
-              {accounts.filter(
-                (account) => String(account.accountId) !== accountId,
-              ).length === 0 && (
-                <p className="mt-1 text-sm text-amber-600">
-                  No other account is available in this list.
+              {accountsLoadError && (
+                <p className="mb-2 text-sm text-red-600 dark:text-red-400">
+                  {accountsLoadError}
                 </p>
               )}
+
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-haspopup="listbox"
+                  aria-expanded={destinationOpen}
+                  disabled={
+                    submitting || accountsLoading || Boolean(accountsLoadError)
+                  }
+                  onClick={() => setDestinationOpen((open) => !open)}
+                  className="flex w-full items-center justify-between gap-3 rounded-lg border border-gray-300 bg-white px-3 py-2 text-left text-sm disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800"
+                >
+                  {destinationAccount ? (
+                    <span>
+                      <span className="block text-base font-semibold text-gray-900 dark:text-white">
+                        {destinationAccount.customerFirstName}{" "}
+                        {destinationAccount.customerLastName}
+                      </span>
+
+                      <span className="block text-sm font-normal text-gray-500 dark:text-gray-400">
+                        {destinationAccount.accountNumber} ·{" "}
+                        {destinationAccount.accountType}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-gray-500 dark:text-gray-400">
+                      {accountsLoading
+                        ? "Loading accounts..."
+                        : "Select a destination account"}
+                    </span>
+                  )}
+
+                  <span aria-hidden="true">▾</span>
+                </button>
+
+                {destinationOpen && (
+                  <div
+                    role="listbox"
+                    aria-label="Destination accounts"
+                    className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+                  >
+                    {/* Same customer's accounts */}
+                    {sameCustomerAccounts.length > 0 && (
+                      <div>
+                        <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                          This Customer's Accounts
+                        </p>
+
+                        {sameCustomerAccounts.map((account) => (
+                          <button
+                            key={account.accountId}
+                            type="button"
+                            role="option"
+                            aria-selected={
+                              destinationAccountId === String(account.accountId)
+                            }
+                            onClick={() => selectDestination(account)}
+                            className="w-full rounded-md px-3 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
+                          >
+                            <span className="block text-base font-semibold text-gray-900 dark:text-white">
+                              {account.customerFirstName}{" "}
+                              {account.customerLastName}
+                            </span>
+
+                            <span className="block text-sm font-normal text-gray-500 dark:text-gray-400">
+                              {account.accountNumber} · {account.accountType}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Other customers' accounts */}
+                    {otherCustomerAccounts.length > 0 && (
+                      <div className="mt-3 border-t border-gray-300 pt-3 dark:border-gray-600">
+                        <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                          Other Accounts
+                        </p>
+
+                        {otherCustomerAccounts.map((account) => (
+                          <button
+                            key={account.accountId}
+                            type="button"
+                            role="option"
+                            aria-selected={
+                              destinationAccountId === String(account.accountId)
+                            }
+                            onClick={() => selectDestination(account)}
+                            className="w-full rounded-md px-3 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
+                          >
+                            <span className="block text-base font-semibold text-gray-900 dark:text-white">
+                              {account.customerFirstName}{" "}
+                              {account.customerLastName}
+                            </span>
+
+                            <span className="block text-sm font-normal text-gray-500 dark:text-gray-400">
+                              {account.accountNumber} · {account.accountType}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {!accountsLoading &&
+                      sameCustomerAccounts.length === 0 &&
+                      otherCustomerAccounts.length === 0 && (
+                        <p className="px-3 py-3 text-sm text-gray-500 dark:text-gray-400">
+                          No other destination accounts available.
+                        </p>
+                      )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
+          {/* Amount */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Amount
@@ -190,6 +375,7 @@ function TransactionForm({
             />
           </div>
 
+          {/* Description */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Description <span className="font-normal">(optional)</span>
@@ -204,6 +390,7 @@ function TransactionForm({
             />
           </div>
 
+          {/* Actions */}
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
@@ -216,7 +403,11 @@ function TransactionForm({
 
             <button
               type="submit"
-              disabled={submitting || accounts.length === 0}
+              disabled={
+                submitting ||
+                accounts.length === 0 ||
+                (isTransfer && (accountsLoading || Boolean(accountsLoadError)))
+              }
               className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
             >
               {submitting ? "Creating..." : "Create Transaction"}

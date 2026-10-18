@@ -10,12 +10,22 @@ export interface Transaction {
   description: string | null;
   transactionStatus: "CREATED" | "PROCESSING" | "ACCEPTED" | "REJECTED";
 
+  // Source account
   accountId: number;
   accountNumber: string;
-
+  accountType: string;
+  // Source customer
   customerId: number;
   customerFirstName: string;
   customerLastName: string;
+
+  // Destination account (used for transfers)
+  destinationAccountId: number | null;
+  destinationAccountNumber: string | null;
+  destinationAccountType: string | null;
+  destinationCustomerId: number | null;
+  destinationCustomerFirstName: string | null;
+  destinationCustomerLastName: string | null;
 }
 
 export interface TransactionPage {

@@ -64,9 +64,12 @@ function CustomerDetails() {
           accountsData.filter((account) => account.customerId === customerId),
         );
 
+        // Include transactions sent and received by this customer.
         setTransactions(
           transactionsData.filter(
-            (transaction) => transaction.customerId === customerId,
+            (transaction) =>
+              transaction.customerId === customerId ||
+              transaction.destinationCustomerId === customerId,
           ),
         );
       } catch (err) {
@@ -82,18 +85,14 @@ function CustomerDetails() {
   }, [id]);
 
   const reloadCustomer = async () => {
-    if (!id) {
-      return;
-    }
+    if (!id) return;
 
     const customerData = await getCustomerById(Number(id));
     setCustomer(customerData);
   };
 
   const reloadAccountsAndTransactions = async () => {
-    if (!id) {
-      return;
-    }
+    if (!id) return;
 
     const customerId = Number(id);
 
@@ -106,9 +105,12 @@ function CustomerDetails() {
       accountsData.filter((account) => account.customerId === customerId),
     );
 
+    // Include transactions sent and received by this customer.
     setTransactions(
       transactionsData.filter(
-        (transaction) => transaction.customerId === customerId,
+        (transaction) =>
+          transaction.customerId === customerId ||
+          transaction.destinationCustomerId === customerId,
       ),
     );
   };
@@ -206,7 +208,7 @@ function CustomerDetails() {
     );
   }
 
-  // Shared transaction ordering and date formatting for mobile and desktop.
+  // Sort transactions from newest to oldest.
   const sortedTransactions = [...transactions].sort(
     (a, b) =>
       new Date(b.transactionDate).getTime() -
@@ -228,6 +230,25 @@ function CustomerDetails() {
         "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
       REJECTED: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
     })[status];
+
+  // Determine the direction of a transaction from this customer's perspective.
+  const getTransactionDirection = (transaction: Transaction) => {
+    const isIncomingTransfer =
+      transaction.transactionType === "TRANSFER" &&
+      transaction.destinationCustomerId === customer.customerId;
+
+    const isOutgoingTransfer =
+      transaction.transactionType === "TRANSFER" &&
+      transaction.customerId === customer.customerId;
+
+    const isCredit =
+      transaction.transactionType === "DEPOSIT" || isIncomingTransfer;
+
+    const isDebit =
+      transaction.transactionType === "WITHDRAWAL" || isOutgoingTransfer;
+
+    return { isCredit, isDebit };
+  };
 
   return (
     <main className="flex-1 overflow-y-auto bg-gray-50 p-8 dark:bg-gray-950">
@@ -383,7 +404,7 @@ function CustomerDetails() {
             Accounts
           </h2>
 
-          {/* Mobile mini-cards */}
+          {/* Mobile account cards */}
           <div className="space-y-2 md:hidden">
             {accounts.map((account) => (
               <button
@@ -426,7 +447,7 @@ function CustomerDetails() {
             )}
           </div>
 
-          {/* Desktop table */}
+          {/* Desktop account table */}
           <div className="hidden overflow-x-auto rounded-xl bg-white shadow dark:bg-gray-900 md:block">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
@@ -489,10 +510,11 @@ function CustomerDetails() {
             Transactions
           </h2>
 
-          {/* Mobile cards */}
+          {/* Mobile transaction cards */}
           <div className="space-y-3 lg:hidden">
             {sortedTransactions.map((transaction) => {
-              const isDeposit = transaction.transactionType === "DEPOSIT";
+              const { isCredit, isDebit } =
+                getTransactionDirection(transaction);
               const statusClasses = getTransactionStatusClasses(
                 transaction.transactionStatus,
               );
@@ -530,12 +552,14 @@ function CustomerDetails() {
 
                     <span
                       className={
-                        isDeposit
+                        isCredit
                           ? "text-sm font-semibold text-green-600 dark:text-green-400"
-                          : "text-sm font-semibold text-red-600 dark:text-red-400"
+                          : isDebit
+                            ? "text-sm font-semibold text-red-600 dark:text-red-400"
+                            : "text-sm font-semibold text-gray-600 dark:text-gray-400"
                       }
                     >
-                      {isDeposit ? "+" : "−"}
+                      {isCredit ? "+" : isDebit ? "−" : ""}
                       {Number(transaction.amount).toFixed(2)} €
                     </span>
                   </div>
@@ -555,7 +579,7 @@ function CustomerDetails() {
             )}
           </div>
 
-          {/* Desktop table */}
+          {/* Desktop transaction table */}
           <div className="hidden overflow-x-auto rounded-xl bg-white shadow dark:bg-gray-900 lg:block">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
@@ -580,7 +604,8 @@ function CustomerDetails() {
 
               <tbody>
                 {sortedTransactions.map((transaction) => {
-                  const isDeposit = transaction.transactionType === "DEPOSIT";
+                  const { isCredit, isDebit } =
+                    getTransactionDirection(transaction);
                   const statusClasses = getTransactionStatusClasses(
                     transaction.transactionStatus,
                   );
@@ -609,12 +634,14 @@ function CustomerDetails() {
 
                       <td
                         className={
-                          isDeposit
+                          isCredit
                             ? "whitespace-nowrap px-4 py-3 font-semibold text-green-600 dark:text-green-400"
-                            : "whitespace-nowrap px-4 py-3 font-semibold text-red-600 dark:text-red-400"
+                            : isDebit
+                              ? "whitespace-nowrap px-4 py-3 font-semibold text-red-600 dark:text-red-400"
+                              : "whitespace-nowrap px-4 py-3 font-semibold text-gray-600 dark:text-gray-400"
                         }
                       >
-                        {isDeposit ? "+" : "−"}
+                        {isCredit ? "+" : isDebit ? "−" : ""}
                         {Number(transaction.amount).toFixed(2)} €
                       </td>
 
