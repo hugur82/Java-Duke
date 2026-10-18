@@ -40,6 +40,10 @@ public class TransactionEntity {
     @JoinColumn(name="account_id")
     @NotNull
     private AccountEntity account;
+    
+    @ManyToOne
+    @JoinColumn(name = "destination_account_id")
+    private AccountEntity destinationAccount;
 
 }
 

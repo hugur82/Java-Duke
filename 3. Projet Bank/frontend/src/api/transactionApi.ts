@@ -1,10 +1,12 @@
 import { apiClient } from "./apiClient";
 
+export type TransactionType = "DEPOSIT" | "WITHDRAWAL" | "TRANSFER";
+
 export interface Transaction {
   transactionId: number;
   transactionDate: string;
   amount: number;
-  transactionType: "DEPOSIT" | "WITHDRAWAL";
+  transactionType: TransactionType;
   description: string | null;
   transactionStatus: "CREATED" | "PROCESSING" | "ACCEPTED" | "REJECTED";
 
@@ -26,7 +28,8 @@ export interface TransactionPage {
 
 export interface TransactionCreateRequest {
   accountId: number;
-  transactionType: "DEPOSIT" | "WITHDRAWAL";
+  destinationAccountId?: number;
+  transactionType: TransactionType;
   amount: number;
   description?: string;
 }
@@ -115,9 +118,12 @@ export async function createTransaction(
 export async function processTransaction(
   transactionId: number,
 ): Promise<Transaction> {
-  const response = await apiClient(`/api/transactions/${transactionId}/process`, {
-    method: "PATCH",
-  });
+  const response = await apiClient(
+    `/api/transactions/${transactionId}/process`,
+    {
+      method: "PATCH",
+    },
+  );
 
   if (!response.ok) {
     throw new Error("Unable to process transaction.");

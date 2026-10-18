@@ -1,12 +1,13 @@
 package com.supabank.bankmanagementsystem.dto;
 
+import java.math.BigDecimal;
+
 import com.supabank.bankmanagementsystem.entity.TransactionType;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.math.BigDecimal;
 
 @Getter @Setter
 public class TransactionCreateRequestDTO {
@@ -22,5 +23,7 @@ public class TransactionCreateRequestDTO {
 
     @NotNull
     private Long accountId;
+
+    private Long destinationAccountId;
 
 }

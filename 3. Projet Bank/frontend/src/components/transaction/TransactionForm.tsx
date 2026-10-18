@@ -3,6 +3,8 @@ import { useState } from "react";
 import { type Account } from "../../api/accountApi";
 import { createTransaction } from "../../api/transactionApi";
 
+type TransactionType = "DEPOSIT" | "WITHDRAWAL" | "TRANSFER";
+
 interface TransactionFormProps {
   accounts: Account[];
   onSuccess: () => void | Promise<void>;
@@ -17,13 +19,15 @@ function TransactionForm({
   const [accountId, setAccountId] = useState(
     String(accounts[0]?.accountId ?? ""),
   );
-  const [transactionType, setTransactionType] = useState<
-    "DEPOSIT" | "WITHDRAWAL"
-  >("DEPOSIT");
+  const [destinationAccountId, setDestinationAccountId] = useState("");
+  const [transactionType, setTransactionType] =
+    useState<TransactionType>("DEPOSIT");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const isTransfer = transactionType === "TRANSFER";
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -41,6 +45,18 @@ function TransactionForm({
       return;
     }
 
+    if (isTransfer) {
+      if (!destinationAccountId) {
+        setError("Please select a destination account.");
+        return;
+      }
+
+      if (destinationAccountId === accountId) {
+        setError("Source and destination accounts must be different.");
+        return;
+      }
+    }
+
     try {
       setSubmitting(true);
 
@@ -48,6 +64,9 @@ function TransactionForm({
         accountId: Number(accountId),
         transactionType,
         amount: numericAmount,
+        ...(isTransfer
+          ? { destinationAccountId: Number(destinationAccountId) }
+          : {}),
         ...(description.trim() ? { description: description.trim() } : {}),
       });
 
@@ -69,7 +88,7 @@ function TransactionForm({
         </h2>
 
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Select one of this customer&apos;s accounts.
+          Select one of this customer's accounts.
         </p>
 
         {error && (
@@ -81,7 +100,7 @@ function TransactionForm({
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Account
+              Source account
             </label>
 
             <select
@@ -106,18 +125,53 @@ function TransactionForm({
 
             <select
               value={transactionType}
-              onChange={(event) =>
-                setTransactionType(
-                  event.target.value as "DEPOSIT" | "WITHDRAWAL",
-                )
-              }
+              onChange={(event) => {
+                setTransactionType(event.target.value as TransactionType);
+                setError("");
+              }}
               disabled={submitting}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-gray-500 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             >
               <option value="DEPOSIT">Deposit</option>
               <option value="WITHDRAWAL">Withdrawal</option>
+              <option value="TRANSFER">Transfer</option>
             </select>
           </div>
+
+          {isTransfer && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Destination account
+              </label>
+
+              <select
+                value={destinationAccountId}
+                onChange={(event) =>
+                  setDestinationAccountId(event.target.value)
+                }
+                required
+                disabled={submitting}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-gray-500 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              >
+                <option value="">Select a destination account</option>
+                {accounts
+                  .filter((account) => String(account.accountId) !== accountId)
+                  .map((account) => (
+                    <option key={account.accountId} value={account.accountId}>
+                      {account.accountNumber} - {account.accountType}
+                    </option>
+                  ))}
+              </select>
+
+              {accounts.filter(
+                (account) => String(account.accountId) !== accountId,
+              ).length === 0 && (
+                <p className="mt-1 text-sm text-amber-600">
+                  No other account is available in this list.
+                </p>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
